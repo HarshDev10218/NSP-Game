@@ -1,4 +1,6 @@
-/* Core Layout Architecture */
+/* ==========================================
+   🌐 CORE LAYOUT & ASPECT CLAMPS
+   ========================================== */
 body {
     margin: 0;
     padding: 0;
@@ -6,7 +8,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100dvh; 
+    height: 100dvh; /* Dynamic viewport height tracks mobile toolbars correctly */
     overflow: hidden;
     font-family: 'Courier New', Courier, monospace;
     color: #fff;
@@ -15,7 +17,7 @@ body {
 
 #game-container {
     position: relative;
-    width: min(95vw, 800px);  
+    width: min(95vw, 800px);  /* Fluid aspect scaling clamps */
     height: min(75vh, 600px);
     display: flex;
     justify-content: center;
@@ -32,7 +34,9 @@ canvas {
     touch-action: none;
 }
 
-/* React Heads-Up Display Layers */
+/* ==========================================
+   📊 HEADS-UP DISPLAY (HUD) DASHBOARD
+   ========================================== */
 .hud-overlay {
     position: absolute;
     top: 0;
@@ -108,7 +112,9 @@ canvas {
 .time-left { left: 20px; }
 .kill-count { right: 20px; }
 
-/* Menu Screens Modals Frameworks */
+/* ==========================================
+   🖥️ INTERFACE SCREEN OVERLAYS
+   ========================================== */
 .screen-overlay {
     position: absolute;
     top: 0;
@@ -119,16 +125,17 @@ canvas {
     z-index: 5;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between; /* Evenly distributes fields to block vertical overflow */
     align-items: center;
-    padding: 20px;
+    padding: 15px 20px; /* Streamlined mobile perimeter gap */
     box-sizing: border-box;
 }
 
 .neon-title {
-    font-size: clamp(20px, 4vw, 32px);
+    font-size: clamp(18px, 3.5vw, 28px); /* Clamped header constraints */
     font-weight: bold;
-    margin-bottom: 15px;
+    margin-top: 5px;
+    margin-bottom: 5px;
     letter-spacing: 2px;
     text-align: center;
 }
@@ -138,19 +145,50 @@ canvas {
 .title-green { color: #00ff66; text-shadow: 0 0 15px #00ff66; }
 
 .summary-text {
-    font-size: clamp(12px, 2.5vw, 15px);
+    font-size: clamp(11px, 2.2vw, 14px);
     color: #cccccc;
-    margin-bottom: 20px;
+    margin-bottom: 5px;
     text-align: center;
-    line-height: 1.5;
+    line-height: 1.4;
+}
+
+/* ==========================================
+   🎮 INTERACTIVE CONTROLS & UTILITIES
+   ========================================== */
+.leaderboard-input-box {
+    display: flex;
+    gap: 10px;
+    margin: 4px 0; /* Compressed control bounds */
+    width: 100%;
+    max-width: 400px;
+    justify-content: center;
+}
+
+.cyber-input {
+    background: #030307;
+    border: 1px solid #ff0055;
+    color: #ff0055;
+    padding: 6px 12px;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 13px;
+    outline: none;
+    box-shadow: 0 0 8px rgba(255,0,85,0.2);
+    text-align: center;
+    flex: 1;
+    max-width: 180px;
+}
+
+.cyber-input:focus {
+    box-shadow: 0 0 15px #ff0055;
 }
 
 .neon-btn {
     background: transparent;
     border: 2px solid #00f0ff;
     color: #00f0ff;
-    padding: 10px 24px;
-    font-size: 15px;
+    padding: 8px 20px; /* Highly optimized physical buttons footprint */
+    font-size: 13px;
     font-family: inherit;
     font-weight: bold;
     cursor: pointer;
@@ -168,11 +206,90 @@ canvas {
     cursor: not-allowed;
 }
 
-/* Upgrades Selection Array Grid */
+/* ==========================================
+   🎛️ VERSION 1.1 HARDWARE AUDIO PANEL
+   ========================================== */
+.audio-settings-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px; /* Tight modular gaps */
+    width: 85%;
+    max-width: 400px;
+    background: rgba(0, 240, 255, 0.03);
+    border: 1px dashed #00f0ff;
+    border-radius: 6px;
+    padding: 8px 12px; /* Tight height allocation */
+    margin: 4px 0;
+}
+
+.volume-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #00f0ff;
+    font-size: 11px; /* Streamlined text tracking profiles */
+    font-weight: bold;
+}
+
+.volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 55%;
+    height: 4px;
+    background: rgba(255, 0, 85, 0.3);
+    border: 1px solid #ff0055;
+    outline: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #00ff66;
+    box-shadow: 0 0 8px #00ff66;
+    cursor: pointer;
+    border-radius: 2px;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: #00ff66;
+    box-shadow: 0 0 8px #00ff66;
+    cursor: pointer;
+    border-radius: 2px;
+    border: none;
+}
+
+/* ==========================================
+   📋 TABLES, INVENTORIES & GRIDS
+   ========================================== */
+.leaderboard-table {
+    width: 100%;
+    max-width: 440px;
+    border-collapse: collapse;
+    margin: 5px 0;
+    font-size: 11px;
+    background: rgba(255,255,255,0.01);
+}
+
+.leaderboard-table th {
+    border-bottom: 2px solid #00f0ff;
+    color: #00f0ff;
+    padding: 4px 6px;
+    text-align: left;
+}
+
+.leaderboard-table td {
+    padding: 4px 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
 .upgrades-grid {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     width: 90%;
     max-width: 460px;
 }
@@ -180,13 +297,13 @@ canvas {
 .upgrade-card {
     background: #08081a;
     border: 1px solid #00f0ff;
-    padding: 12px;
+    padding: 10px;
     cursor: pointer;
     transition: transform 0.15s ease, background 0.15s ease;
 }
 
 .upgrade-card:hover {
-    transform: scale(1.02);
+    transform: scale(1.01);
     background: #0d0d26;
     box-shadow: 0 0 12px rgba(0,240,255,0.3);
 }
@@ -194,93 +311,19 @@ canvas {
 .card-name {
     font-weight: bold;
     color: #00ff66;
-    font-size: 14px;
-    margin-bottom: 4px;
+    font-size: 13px;
+    margin-bottom: 2px;
 }
 
 .card-desc {
     color: #bbbbbb;
-    font-size: 12px;
-    line-height: 1.4;
+    font-size: 11px;
+    line-height: 1.3;
 }
 
-/* Database Scoring Table Grid Interface Layouts */
-.leaderboard-table {
-    width: 100%;
-    max-width: 440px;
-    border-collapse: collapse;
-    margin: 10px 0;
-    font-size: 12px;
-    background: rgba(255,255,255,0.01);
-}
-
-.leaderboard-table th {
-    border-bottom: 2px solid #00f0ff;
-    color: #00f0ff;
-    padding: 6px;
-    text-align: left;
-}
-
-.leaderboard-table td {
-    padding: 5px 6px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.leaderboard-input-box {
-    display: flex;
-    gap: 10px;
-    margin: 10px 0;
-    width: 100%;
-    max-width: 400px;
-    justify-content: center;
-}
-
-.cyber-input {
-    background: #030307;
-    border: 1px solid #ff0055;
-    color: #ff0055;
-    padding: 8px 12px;
-    font-family: inherit;
-    font-weight: bold;
-    font-size: 14px;
-    outline: none;
-    box-shadow: 0 0 8px rgba(255,0,85,0.2);
-    text-align: center;
-    flex: 1;
-    max-width: 180px;
-}
-
-.cyber-input:focus {
-    box-shadow: 0 0 15px #ff0055;
-}
-
-/* Premium Text Logo Layout parameters */
-.game-logo-wrapper {
-    margin-bottom: 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.neon-logo-text {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 900;
-    font-size: clamp(36px, 8vw, 54px);
-    color: #00ff66;
-    letter-spacing: 4px;
-    text-shadow: 0 0 5px #00ff66, 
-                 0 0 10px #00ff66, 
-                 0 0 20px #00ff66, 
-                 0 0 40px #00ff66;
-    animation: logoPulse 2s infinite alternate;
-}
-
-@keyframes logoPulse {
-    0% { transform: scale(1); filter: brightness(1); }
-    100% { transform: scale(1.03); filter: brightness(1.2); }
-}
-
-/* --- MOBILE SPECIFIC JOYSTICK LAYOUT CONTROLS --- */
+/* ==========================================
+   🕹️ MOBILE ANALOG JOYSTICK TOUCH LAYER
+   ========================================== */
 .mobile-input-layer {
     position: absolute;
     bottom: 40px;
@@ -318,48 +361,4 @@ canvas {
     .mobile-input-layer {
         display: block;
     }
-}
-
-/* --- VERSION 1.1 AUDIO SETTINGS UI PANEL --- */
-.audio-settings-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 85%;
-    max-width: 400px;
-    background: rgba(0, 240, 255, 0.03);
-    border: 1px dashed #00f0ff;
-    border-radius: 6px;
-    padding: 15px;
-    margin: 10px 0;
-}
-
-.volume-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: #00f0ff;
-    font-size: 13px;
-    font-weight: bold;
-}
-
-.volume-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 60%;
-    height: 6px;
-    background: #121226;
-    border: 1px solid #ff0055;
-    outline: none;
-    box-shadow: 0 0 5px rgba(255, 0, 85, 0.3);
-}
-
-.volume-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 14px;
-    height: 14px;
-    background: #00ff66;
-    box-shadow: 0 0 8px #00ff66;
-    cursor: pointer;
 }
