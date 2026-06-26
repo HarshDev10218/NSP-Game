@@ -2,22 +2,221 @@
 const SUPABASE_URL = 'https://xmbjhlyrswvlwfknktey.supabase.co'; 
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtYmpobHlyc3d2bHdma25rdGV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNzc3OTQsImV4cCI6MjA5Nzk1Mzc5NH0.6FEB8ZqvlUdYeZb9DPu5bVfeAHbJVvZHhtIBCFlS9gY';
 
-// Separated instance reference completely to guarantee absolute scope shielding
 const cyberbase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const { useEffect, useRef, useState } = React;
+
+// ==========================================
+// 🔊 CHIP-TUNE SYNTHESIZER AUDIO CORE (V1.1)
+// ==========================================
+const AudioEngine = {
+    ctx: null,
+    masterVol: 0.5,
+    musicVol: 0.4,
+    sfxVol: 0.5,
+    isMuted: false,
+    musicNode: null,
+
+    init() {
+        if (this.ctx) return;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        this.ctx = new AudioContextClass();
+    },
+
+    getGain(type) {
+        if (!this.ctx || this.isMuted) return 0;
+        return this.masterVol * (type === 'music' ? this.musicVol : this.sfxVol);
+    },
+
+    playSFX(type) {
+        this.init();
+        if (!this.ctx) return;
+        
+        // Auto-resume background audio context if browser suspended it
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        const currentSFXVolume = this.getGain('sfx');
+
+        switch(type) {
+            case 'click':
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                gain.gain.setValueAtTime(currentSFXVolume * 0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now); osc.stop(now + 0.05);
+                break;
+            case 'start':
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+                gain.gain.setValueAtTime(currentSFXVolume * 0.6, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+                break;
+            case 'shoot':
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.linearRampToValueAtTime(220, now + 0.1);
+                gain.gain.setValueAtTime(currentSFXVolume * 0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+                break;
+            case 'hit':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(120, now);
+                gain.gain.setValueAtTime(currentSFXVolume * 0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.06);
+                osc.start(now); osc.stop(now + 0.06);
+                break;
+            case 'death':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.linearRampToValueAtTime(80, now + 0.15);
+                gain.gain.setValueAtTime(currentSFXVolume * 0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+                break;
+            case 'explosion':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.linearRampToValueAtTime(30, now + 0.4);
+                gain.gain.setValueAtTime(currentSFXVolume * 0.6, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+                break;
+            case 'damage':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(60, now + 0.25);
+                gain.gain.setValueAtTime(currentSFXVolume * 0.4, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now); osc.stop(now + 0.25);
+                break;
+            case 'powerup':
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(554, now + 0.06);
+                osc.frequency.setValueAtTime(659, now + 0.12);
+                osc.frequency.setValueAtTime(880, now + 0.18);
+                gain.gain.setValueAtTime(currentSFXVolume * 0.4, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+                break;
+            case 'boss_spawn':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(70, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.6);
+                gain.gain.setValueAtTime(currentSFXVolume * 0.7, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+                osc.start(now); osc.stop(now + 0.6);
+                break;
+            case 'boss_death':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.linearRampToValueAtTime(40, now + 1.0);
+                gain.gain.setValueAtTime(currentSFXVolume * 0.8, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 1.0);
+                osc.start(now); osc.stop(now + 1.0);
+                break;
+            case 'gameover':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.linearRampToValueAtTime(55, now + 0.8);
+                gain.gain.setValueAtTime(currentSFXVolume * 0.6, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.8);
+                osc.start(now); osc.stop(now + 0.8);
+                break;
+            case 'highscore':
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587, now);
+                osc.frequency.exponentialRampToValueAtTime(1174, now + 0.4);
+                gain.gain.setValueAtTime(currentSFXVolume * 0.5, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+                break;
+        }
+    },
+
+    setMusicTheme(state) {
+        this.init();
+        if (!this.ctx) return;
+        
+        if (this.musicNode) {
+            try { this.musicNode.stop(); } catch(e){}
+            this.musicNode = null;
+        }
+
+        const currentMusicVolume = this.getGain('music');
+        if (currentMusicVolume <= 0) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(currentMusicVolume * 0.15, now);
+
+        // Continuous Chiptune Sequencer Loops for Background Motifs
+        let notes = [];
+        if (state === 'START_SCREEN') notes = [110, 130, 146, 130]; 
+        if (state === 'PLAY') notes = [146, 165, 174, 196, 220, 196, 174, 165]; 
+        if (state === 'BOSS') notes = [98, 98, 87, 87, 73, 73, 110, 110];
+        if (state === 'GAME_OVER') notes = [87, 82, 73, 65];
+
+        if (notes.length === 0) return;
+
+        const noteLength = state === 'BOSS' ? 0.2 : 0.4;
+        notes.forEach((freq, idx) => {
+            const timeOffset = idx * noteLength;
+            osc.frequency.setValueAtTime(freq, now + timeOffset);
+            // Re-trigger envelope pop to emulate standard rhythm sequencing tracker loops
+            gain.gain.setValueAtTime(currentMusicVolume * 0.15, now + timeOffset);
+            gain.gain.linearRampToValueAtTime(currentMusicVolume * 0.05, now + timeOffset + noteLength - 0.02);
+        });
+
+        osc.loop = true;
+        osc.start(now);
+        // Setup scheduling boundaries to automatically re-fire the sequences continuously
+        const seqTotalDuration = notes.length * noteLength;
+        osc.stop(now + seqTotalDuration);
+        
+        this.musicNode = osc;
+
+        // Queue self-triggering loop scheduling intervals
+        this.loopTimer = setTimeout(() => {
+            if (this.musicNode === osc) this.setMusicTheme(state);
+        }, seqTotalDuration * 1000);
+    },
+
+    stopMusic() {
+        if (this.loopTimer) clearTimeout(this.loopTimer);
+        if (this.musicNode) {
+            try { this.musicNode.stop(); } catch(e){}
+            this.musicNode = null;
+        }
+    }
+};
 
 function CyberpunkSurvival() {
     const canvasRef = useRef(null);
     const knobRef = useRef(null);
 
-    // React Menu Engine Interfaces States
+    // React Interface States
     const [gameState, setGameState] = useState('START_SCREEN'); 
     const [hud, setHud] = useState({ health: 100, level: 1, xp: 0, xpNeeded: 12, kills: 0, time: "00:00" });
     const [bossHp, setBossHp] = useState({ current: 0, max: 250, active: false });
     const [cards, setCards] = useState([]);
 
-    // Cloud Database & Synchronization States
+    // Cloud Database & Serialization States
     const [playerName, setPlayerName] = useState('');
     const [leaderboard, setLeaderboard] = useState([]);
     const [scoreSubmitted, setScoreSubmitted] = useState(false);
@@ -25,11 +224,16 @@ function CyberpunkSurvival() {
     const [dbError, setDbError] = useState(null);
     const [showStartLeaderboard, setShowStartLeaderboard] = useState(false); 
     const [finalUpgradesManifest, setFinalUpgradesManifest] = useState([]);
+
+    // Audio Variable State Configurations (React Trigger Targets)
+    const [mVolume, setMVol] = useState(50);
+    const [musVolume, setMusVol] = useState(40);
+    const [sfxVolume, setSfxVol] = useState(50);
+    const [muteActive, setMuteActive] = useState(false);
     
-    // Prevent selections from registering twice due to mobile click latency
     const isSelectionLocked = useRef(false);
 
-
+    // Internal Game Core Physics Matrices
     let logicalWidth = 800;
     let logicalHeight = 600;
     const playerRef = useRef({ x: 400, y: 300, radius: 14, baseSpeed: 3.5, speedMult: 1, health: 100, level: 1, xp: 0, xpNeeded: 12, fireCooldown: 0, baseFireRate: 35, laserCooldown: 180, shieldAngle: 0, basePickupRadius: 80, pickupRadius: 80, lastDir: { x: 1, y: 0 } });
@@ -41,7 +245,6 @@ function CyberpunkSurvival() {
     const cameraRef = useRef({ x: 0, y: 0 });
     const touchVectorRef = useRef({ x: 0, y: 0 });
     
-    // Delta-Time Synchronization Engine Parameters
     const gameMetrics = useRef({ accumTime: 0, clockSeconds: 0, killCounter: 0, bossesKilled: 0 }); 
     const lastTimestamp = useRef(0);
     const cancelEngineId = useRef(null);
@@ -55,7 +258,17 @@ function CyberpunkSurvival() {
         speed: { id: "speed", name: "BOOT OVERDRIVE", desc: "Increases baseline system locomotion propulsion speed by 15%.", lvl: 0 }
     });
 
+    // Synchronize React state modifications to Audio engine nodes
+    useEffect(() => {
+        AudioEngine.masterVol = mVolume / 100;
+        AudioEngine.musicVol = musVolume / 100;
+        AudioEngine.sfxVol = sfxVolume / 100;
+        AudioEngine.isMuted = muteActive;
+        AudioEngine.setMusicTheme(gameState === 'PLAY' && bossHp.active ? 'BOSS' : gameState);
+    }, [mVolume, musVolume, sfxVolume, muteActive, gameState, bossHp.active]);
+
     const initializeGameSession = () => {
+        AudioEngine.playSFX('start');
         const cleanedName = playerName.trim().toUpperCase().replace(/\s+/g, '');
         if (!cleanedName || cleanedName.length > 10) return;
         setPlayerName(cleanedName);
@@ -80,7 +293,6 @@ function CyberpunkSurvival() {
         setGameState('PLAY');
     };
 
-    // Database Isolation Infrastructure
     const fetchLeaderboardScores = async () => {
         setDbLoading(true);
         setDbError(null);
@@ -106,17 +318,19 @@ function CyberpunkSurvival() {
         if (!validatedName || scoreSubmitted) return;
         setDbLoading(true);
         try {
+            const isTopScore = leaderboard.length === 0 || gameMetrics.current.killCounter > leaderboard[0].kills;
+            
             const { error } = await cyberbase
                 .from('leaderboard')
-                .insert([
-                    { player_name: validatedName, kills: gameMetrics.current.killCounter, survival_time: hud.time }
-                ]);
+                .insert([{ player_name: validatedName, kills: gameMetrics.current.killCounter, survival_time: hud.time }]);
             
             if (error) throw error;
             setScoreSubmitted(true);
+            
+            if (isTopScore) AudioEngine.playSFX('highscore');
             await fetchLeaderboardScores(); 
         } catch (err) {
-            console.error("Database submission crash saved locally:", err.message);
+            console.error("Database sync exception:", err.message);
             setDbError("Sync failed - Score locked locally");
         } finally {
             setDbLoading(false);
@@ -124,6 +338,7 @@ function CyberpunkSurvival() {
     };
 
     const toggleStartLeaderboardMode = () => {
+        AudioEngine.playSFX('click');
         if (!showStartLeaderboard) fetchLeaderboardScores();
         setShowStartLeaderboard(!showStartLeaderboard);
     };
@@ -135,6 +350,7 @@ function CyberpunkSurvival() {
 
     useEffect(() => {
         if (gameState === 'GAME_OVER') {
+            AudioEngine.playSFX('gameover');
             fetchLeaderboardScores();
             compileFinalUpgradesReport();
         }
@@ -151,24 +367,17 @@ function CyberpunkSurvival() {
         window.addEventListener('keydown', listenDown);
         window.addEventListener('keyup', listenUp);
 
-        // Locate and replace this exact function inside game_2.js:
         const resizeCanvasBufferToViewport = () => {
             const container = canvas.parentElement;
             if (!container) return;
-            
-            // Forces the canvas to snap perfectly to its physical layout box bounds
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
-            
-            // DYNAMICALLY RE-ANCHOR THE CAMERA BOUNDARIES
-            // This stops components and enemies from overflowing past the bottom border!
             logicalWidth = container.clientWidth;
             logicalHeight = container.clientHeight;
         };
         window.addEventListener('resize', resizeCanvasBufferToViewport);
         resizeCanvasBufferToViewport();
 
-        // High Performance Frame Processing Core Execution Loop
         const runEngineStep = (timestamp) => {
             if (!lastTimestamp.current) lastTimestamp.current = timestamp;
             let dt = timestamp - lastTimestamp.current;
@@ -192,7 +401,6 @@ function CyberpunkSurvival() {
                     setHud(prev => ({ ...prev, time: `${min}:${sec}` }));
                 }
 
-                // Compile Movement Vector Velocities
                 let mx = 0, my = 0;
                 if (keysRef.current['w'] || keysRef.current['arrowup']) my = -1;
                 if (keysRef.current['s'] || keysRef.current['arrowdown']) my = 1;
@@ -218,7 +426,6 @@ function CyberpunkSurvival() {
                 cameraRef.current.x = p.x - logicalWidth / 2;
                 cameraRef.current.y = p.y - logicalHeight / 2;
 
-                // Firing System Update Engine Block
                 if (p.fireCooldown > 0) p.fireCooldown -= frameRatio;
                 if (p.fireCooldown <= 0 && enemiesRef.current.length > 0) {
                     let target = null, minDist = Infinity;
@@ -230,6 +437,8 @@ function CyberpunkSurvival() {
                         const angle = Math.atan2(target.y - p.y, target.x - p.x);
                         const bulletSpeed = 9;
                         const attackLvl = upgradesRef.current.attackSpeed.lvl;
+
+                        AudioEngine.playSFX('shoot');
 
                         if (attackLvl >= 4) {
                             projectilesRef.current.push({ x: p.x, y: p.y, vx: Math.cos(angle) * bulletSpeed, vy: Math.sin(angle) * bulletSpeed, radius: 5, laser: false, dead: false });
@@ -250,6 +459,7 @@ function CyberpunkSurvival() {
                         const laserLvl = upgradesRef.current.laser.lvl;
                         const lWidth = laserLvl >= 4 ? 54 : 34;
                         const lDuration = laserLvl >= 4 ? 25 : 15;
+                        AudioEngine.playSFX('shoot');
                         projectilesRef.current.push({ x: p.x, y: p.y, angle: angle, width: lWidth, length: 1200, duration: lDuration, laser: true, dead: false });
                         p.laserCooldown = Math.max(70, 190 - laserLvl * 25);
                     }
@@ -296,13 +506,13 @@ function CyberpunkSurvival() {
                         const bossNode = { x: bx, y: by, type: 'boss', hp: bMaxHp, maxHp: bMaxHp, speed: 0.8, r: 42, color: '#9900ff', shape: 'oct', dead: false, bossActionTimer: 120, state: 'normal', dashVx: 0, dashVy: 0 };
                         enemiesRef.current.push(bossNode);
                         bossSpawnedForCurrentMilestone.current = true;
+                        AudioEngine.playSFX('boss_spawn');
                         setBossHp({ current: bMaxHp, max: bMaxHp, active: true });
                     }
                 } else {
                     bossSpawnedForCurrentMilestone.current = false;
                 }
 
-                // AI Motion Mechanics
                 enemiesRef.current.forEach(e => {
                     const distToPlayer = Math.hypot(p.y - e.y, p.x - e.x);
 
@@ -350,6 +560,7 @@ function CyberpunkSurvival() {
                             if (e.timer <= 0) {
                                 if (distToPlayer < 140) {
                                     p.health = Math.max(0, p.health - 35);
+                                    AudioEngine.playSFX('damage');
                                     setHud(prev => ({ ...prev, health: p.health }));
                                     if (p.health <= 0) setGameState('GAME_OVER');
                                 }
@@ -373,8 +584,10 @@ function CyberpunkSurvival() {
                                 e.y += Math.sin(angle) * 0.5 * frameRatio;
                                 if (e.timer <= 0) {
                                     e.hp = -10; 
+                                    AudioEngine.playSFX('explosion');
                                     if (distToPlayer < 75) {
                                         p.health = Math.max(0, p.health - 22);
+                                        AudioEngine.playSFX('damage');
                                         setHud(prev => ({ ...prev, health: p.health }));
                                         if (p.health <= 0) setGameState('GAME_OVER');
                                     }
@@ -397,6 +610,7 @@ function CyberpunkSurvival() {
                         if (e.type === 'breacher' && e.state === 'chase') damageAmt = 0.5;
 
                         p.health = Math.max(0, Math.min(100, p.health - damageAmt * frameRatio));
+                        if (Math.random() < 0.08) AudioEngine.playSFX('damage');
                         setHud(prev => ({ ...prev, health: p.health }));
                         if (p.health <= 0) setGameState('GAME_OVER');
                     }
@@ -408,6 +622,7 @@ function CyberpunkSurvival() {
                             const ox = p.x + Math.cos(sa) * 65; const oy = p.y + Math.sin(sa) * 65;
                             if (Math.hypot(e.x - ox, e.y - oy) < e.r + 6) { 
                                 e.hp -= (0.12 + (upgradesRef.current.shield.lvl * 0.04)) * frameRatio; 
+                                if (Math.random() < 0.1) AudioEngine.playSFX('hit');
                             }
                         }
                     }
@@ -422,7 +637,10 @@ function CyberpunkSurvival() {
                             if (dot > 0 && dot < proj.length) {
                                 let cx = proj.x + Math.cos(proj.angle) * dot;
                                 let cy = proj.y + Math.sin(proj.angle) * dot;
-                                if (Math.hypot(e.x - cx, e.y - cy) < e.r + proj.width / 2) e.hp -= 0.25 * frameRatio;
+                                if (Math.hypot(e.x - cx, e.y - cy) < e.r + proj.width / 2) {
+                                    e.hp -= 0.25 * frameRatio;
+                                    if (Math.random() < 0.15) AudioEngine.playSFX('hit');
+                                }
                             }
                         });
                         if (proj.duration <= 0) proj.dead = true;
@@ -430,7 +648,9 @@ function CyberpunkSurvival() {
                         proj.x += proj.vx * frameRatio; proj.y += proj.vy * frameRatio;
                         for (let e of enemiesRef.current) {
                             if (Math.hypot(proj.x - e.x, proj.y - e.y) < proj.radius + e.r) { 
-                                proj.dead = true; e.hp -= 1; break; 
+                                proj.dead = true; e.hp -= 1; 
+                                AudioEngine.playSFX('hit');
+                                break; 
                             }
                         }
                         if (Math.hypot(proj.x - p.x, proj.y - p.y) > 900) proj.dead = true;
@@ -447,6 +667,7 @@ function CyberpunkSurvival() {
                         
                         if (d < p.radius + 4) {
                             g.dead = true;
+                            AudioEngine.playSFX('powerup');
                             if (g.type === 'heart') {
                                 p.health = Math.max(0, Math.min(100, p.health + 25));
                                 setHud(prev => ({ ...prev, health: p.health }));
@@ -470,6 +691,12 @@ function CyberpunkSurvival() {
                         if (e.hp !== -10) metrics.killCounter++; 
                         setHud(prev => ({ ...prev, kills: metrics.killCounter }));
                         
+                        if (e.type === 'boss') {
+                            AudioEngine.playSFX('boss_death');
+                        } else if (e.hp !== -10) {
+                            AudioEngine.playSFX('death');
+                        }
+
                         for (let i = 0; i < (e.type === 'boss' ? 50 : 10); i++) {
                             const pa = Math.random() * Math.PI * 2, ps = Math.random() * (e.type === 'boss' ? 6 : 3) + 1;
                             particlesRef.current.push({ x: e.x, y: e.y, vx: Math.cos(pa) * ps, vy: Math.sin(pa) * ps, r: Math.random() * 2.5 + 1, alpha: 1, color: e.color });
@@ -610,6 +837,7 @@ function CyberpunkSurvival() {
 
         return () => {
             if (cancelEngineId.current) cancelAnimationFrame(cancelEngineId.current);
+            AudioEngine.stopMusic();
             window.removeEventListener('keydown', listenDown);
             window.removeEventListener('keyup', listenUp);
             window.removeEventListener('resize', resizeCanvasBufferToViewport);
@@ -640,6 +868,7 @@ function CyberpunkSurvival() {
         if (isSelectionLocked.current) return;
         isSelectionLocked.current = true; 
 
+        AudioEngine.playSFX('powerup');
         const up = upgradesRef.current[id]; up.lvl++;
         if (id === 'speed') playerRef.current.speedMult += 0.15;
         if (id === 'magnet') {
@@ -648,6 +877,28 @@ function CyberpunkSurvival() {
         
         setGameState('PLAY');
         setTimeout(() => { isSelectionLocked.current = false; }, 200);
+    };
+
+    const renderAudioSettingsMenu = () => {
+        return React.createElement("div", { className: "audio-settings-panel" },
+            React.createElement("div", { className: "volume-row" },
+                React.createElement("span", null, "MASTER HARDWARE VOL:"),
+                React.createElement("input", { type: "range", className: "volume-slider", min: "0", max: "100", value: mVolume, onChange: (e) => setMVol(Number(e.target.value)) })
+            ),
+            React.createElement("div", { className: "volume-row" },
+                React.createElement("span", null, "AMBIENT RHYTHM VOL:"),
+                React.createElement("input", { type: "range", className: "volume-slider", min: "0", max: "100", value: musVolume, onChange: (e) => setMusVol(Number(e.target.value)) })
+            ),
+            React.createElement("div", { className: "volume-row" },
+                React.createElement("span", null, "FX MATRIX ENVELOPE:"),
+                React.createElement("input", { type: "range", className: "volume-slider", min: "0", max: "100", value: sfxVolume, onChange: (e) => setSfxVol(Number(e.target.value)) })
+            ),
+            React.createElement("button", { 
+                className: "neon-btn", 
+                style: { marginTop: "5px", padding: "4px 10px", fontSize: "11px", borderColor: muteActive ? "#ff0055" : "#00f0ff", color: muteActive ? "#ff0055" : "#00f0ff" },
+                onClick: () => { AudioEngine.playSFX('click'); setMuteActive(!muteActive); }
+            }, muteActive ? "MUTED // REACTIVATE" : "MUTE ACOUSTIC NODES")
+        );
     };
 
     const renderLeaderboardStructure = () => {
@@ -679,7 +930,7 @@ function CyberpunkSurvival() {
         if (finalUpgradesManifest.length === 0) return null;
         return React.createElement("div", { style: { margin: '8px 0', width: '80%', maxWidth: '450px', background: 'rgba(255,255,255,0.03)', border: '1px dashed #333', padding: '10px', borderRadius: '4px' } },
             React.createElement("div", { style: { fontSize: '11px', color: '#888', marginBottom: '5px', textAlign: 'center', fontWeight: 'bold' } }, ">> RETRIEVED CHASSIS INVENTORY LOADOUT:"),
-            React.createElement("div", { style: { display: 'flex', fontSize: '12px', width: '100%' } },
+            React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: '4px' } },
                 finalUpgradesManifest.map(u => React.createElement("div", { key: u.id, style: { display: 'flex', fontSize: '12px', width: '100%' } },
                     React.createElement("span", { style: { color: '#00f0ff', flex: 1, textAlign: 'left' } }, u.name),
                     React.createElement("span", { style: { color: '#00ff66', fontWeight: 'bold' } }, "LVL ", u.lvl)
@@ -697,7 +948,7 @@ function CyberpunkSurvival() {
             { name: "MEGAMECH ANCHOR", desc: "MIGHEST THREAT BOSS. Dashes, circular slashes, summons swarms.", color: "#9900ff" }
         ];
 
-        return React.createElement("div", { style: { width: '85%', maxWidth: '480px', background: 'rgba(0, 240, 255, 0.02)', border: '1px solid #1a3a4a', borderRadius: '6px', padding: '12px', margin: '15px 0', textAlign: 'left' } },
+        return React.createElement("div", { style: { width: '85%', maxWidth: '480px', background: 'rgba(0, 240, 255, 0.02)', border: '1px solid #1a3a4a', borderRadius: '6px', padding: '10px', margin: '4px 0', textAlign: 'left' } },
             React.createElement("div", { style: { fontSize: '12px', color: '#00f0ff', fontWeight: 'bold', borderBottom: '1px solid #00f0ff', paddingBottom: '4px', marginBottom: '8px', letterSpacing: '1px' } }, "// DETECTED SECTOR HOSTILES INTEL:"),
             React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: '8px' } },
                 threats.map((t, idx) => React.createElement("div", { key: idx, style: { fontSize: '11px', display: 'flex', gap: '8px', alignItems: 'start' } },
@@ -711,7 +962,7 @@ function CyberpunkSurvival() {
     return React.createElement("div", { id: "game-container" },
         React.createElement("canvas", { ref: canvasRef }),
         
-        React.createElement("div", { className: "mobile-input-layer", onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd },
+        gameState === 'PLAY' && React.createElement("div", { className: "mobile-input-layer", onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd },
             React.createElement("div", { className: "joystick-base" },
                 React.createElement("div", { ref: knobRef, className: "joystick-knob" })
             )
@@ -732,10 +983,6 @@ function CyberpunkSurvival() {
         ),
 
         gameState === 'START_SCREEN' && React.createElement("div", { className: "screen-overlay" },
-            React.createElement("div", { className: "game-logo-wrapper" },
-                React.createElement("div", { className: "neon-logo-text" }, "N//S//P")
-            ),
-
             React.createElement("div", { className: "neon-title title-blue" }, "NEON SURVIVAL PROTOCOL"),
             
             !showStartLeaderboard ? [
@@ -757,6 +1004,7 @@ function CyberpunkSurvival() {
                         onClick: initializeGameSession 
                     }, "LAUNCH CORE")
                 ),
+                renderAudioSettingsMenu(), // Version 1.1 Live Mixer Module
                 React.createElement("button", { key: "global-lookup-btn", className: "neon-btn", style: { marginTop: '10px', fontSize: '13px', padding: '6px 14px', borderColor: '#ff0055', color: '#ff0055', boxShadow: '0 0 10px rgba(255,0,85,0.2)' }, onClick: toggleStartLeaderboardMode }, "VIEW GLOBAL LEADERBOARD")
             ] : [
                 React.createElement("div", { key: "leaderboard-embed", style: { width: '100%' } }, renderLeaderboardStructure()),
@@ -780,7 +1028,7 @@ function CyberpunkSurvival() {
             renderUpgradesManifestReport(), 
             renderLeaderboardStructure(),
             React.createElement("div", { style: { marginTop: '15px', display: 'flex', gap: '15px' } },
-                !scoreSubmitted && React.createElement("button", { className: "neon-btn", disabled: dbLoading, onClick: submitScoreToDatabase }, dbLoading ? "SYNCING..." : "SYNC AGENT DATA"),
+                !scoreSubmitted && React.createElement("button", { className: "neon-btn", disabled: dbLoading, onClick: () => { AudioEngine.playSFX('click'); submitScoreToDatabase(); } }, dbLoading ? "SYNCING..." : "SYNC AGENT DATA"),
                 React.createElement("button", { className: "neon-btn", onClick: startSimulation }, "REBOOT CHASSIS")
             )
         )
