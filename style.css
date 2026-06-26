@@ -125,17 +125,18 @@ canvas {
     z-index: 5;
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Evenly distributes fields to block vertical overflow */
+    justify-content: flex-start; /* Keeps layout flowing sequentially from the top down */
     align-items: center;
-    padding: 15px 20px; /* Streamlined mobile perimeter gap */
+    padding: clamp(6px, 1.8vh, 16px); /* Adaptive height scaling padding */
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 .neon-title {
-    font-size: clamp(18px, 3.5vw, 28px); /* Clamped header constraints */
+    font-size: clamp(16px, 3.2vw, 24px); /* Streamlined size scales correctly on mobile devices */
     font-weight: bold;
-    margin-top: 5px;
-    margin-bottom: 5px;
+    margin-top: 2px;
+    margin-bottom: 2px;
     letter-spacing: 2px;
     text-align: center;
 }
@@ -145,11 +146,11 @@ canvas {
 .title-green { color: #00ff66; text-shadow: 0 0 15px #00ff66; }
 
 .summary-text {
-    font-size: clamp(11px, 2.2vw, 14px);
+    font-size: clamp(10px, 1.8vw, 12px); /* Tighter tracking bounds */
     color: #cccccc;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     text-align: center;
-    line-height: 1.4;
+    line-height: 1.3;
 }
 
 /* ==========================================
@@ -157,8 +158,8 @@ canvas {
    ========================================== */
 .leaderboard-input-box {
     display: flex;
-    gap: 10px;
-    margin: 4px 0; /* Compressed control bounds */
+    gap: 8px;
+    margin: 4px 0;
     width: 100%;
     max-width: 400px;
     justify-content: center;
@@ -168,15 +169,15 @@ canvas {
     background: #030307;
     border: 1px solid #ff0055;
     color: #ff0055;
-    padding: 6px 12px;
+    padding: 5px 10px;
     font-family: inherit;
     font-weight: bold;
-    font-size: 13px;
+    font-size: 12px;
     outline: none;
     box-shadow: 0 0 8px rgba(255,0,85,0.2);
     text-align: center;
     flex: 1;
-    max-width: 180px;
+    max-width: 160px;
 }
 
 .cyber-input:focus {
@@ -187,8 +188,8 @@ canvas {
     background: transparent;
     border: 2px solid #00f0ff;
     color: #00f0ff;
-    padding: 8px 20px; /* Highly optimized physical buttons footprint */
-    font-size: 13px;
+    padding: 6px 16px; /* Streamlined layout button boundaries */
+    font-size: 12px;
     font-family: inherit;
     font-weight: bold;
     cursor: pointer;
@@ -212,13 +213,13 @@ canvas {
 .audio-settings-panel {
     display: flex;
     flex-direction: column;
-    gap: 6px; /* Tight modular gaps */
-    width: 85%;
-    max-width: 400px;
-    background: rgba(0, 240, 255, 0.03);
-    border: 1px dashed #00f0ff;
+    gap: 4px; /* Highly condensed modular layout spacing */
+    width: 90%;
+    max-width: 440px;
+    background: rgba(0, 240, 255, 0.02);
+    border: 1px dashed rgba(0, 240, 255, 0.3);
     border-radius: 6px;
-    padding: 8px 12px; /* Tight height allocation */
+    padding: 6px 10px;
     margin: 4px 0;
 }
 
@@ -227,16 +228,16 @@ canvas {
     justify-content: space-between;
     align-items: center;
     color: #00f0ff;
-    font-size: 11px; /* Streamlined text tracking profiles */
+    font-size: 10px; /* Streamlined for small mobile displays */
     font-weight: bold;
 }
 
 .volume-slider {
     -webkit-appearance: none;
     appearance: none;
-    width: 55%;
+    width: 50%;
     height: 4px;
-    background: rgba(255, 0, 85, 0.3);
+    background: rgba(255, 0, 85, 0.2);
     border: 1px solid #ff0055;
     outline: none;
 }
@@ -244,21 +245,21 @@ canvas {
 .volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     background: #00ff66;
-    box-shadow: 0 0 8px #00ff66;
+    box-shadow: 0 0 6px #00ff66;
     cursor: pointer;
-    border-radius: 2px;
+    border-radius: 1px;
 }
 
 .volume-slider::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     background: #00ff66;
-    box-shadow: 0 0 8px #00ff66;
+    box-shadow: 0 0 6px #00ff66;
     cursor: pointer;
-    border-radius: 2px;
+    border-radius: 1px;
     border: none;
 }
 
@@ -269,27 +270,27 @@ canvas {
     width: 100%;
     max-width: 440px;
     border-collapse: collapse;
-    margin: 5px 0;
-    font-size: 11px;
+    margin: 4px 0;
+    font-size: 10px;
     background: rgba(255,255,255,0.01);
 }
 
 .leaderboard-table th {
     border-bottom: 2px solid #00f0ff;
     color: #00f0ff;
-    padding: 4px 6px;
+    padding: 3px 6px;
     text-align: left;
 }
 
 .leaderboard-table td {
-    padding: 4px 6px;
+    padding: 3px 6px;
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
 .upgrades-grid {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     width: 90%;
     max-width: 460px;
 }
@@ -297,7 +298,7 @@ canvas {
 .upgrade-card {
     background: #08081a;
     border: 1px solid #00f0ff;
-    padding: 10px;
+    padding: 8px;
     cursor: pointer;
     transition: transform 0.15s ease, background 0.15s ease;
 }
@@ -311,13 +312,13 @@ canvas {
 .card-name {
     font-weight: bold;
     color: #00ff66;
-    font-size: 13px;
+    font-size: 12px;
     margin-bottom: 2px;
 }
 
 .card-desc {
     color: #bbbbbb;
-    font-size: 11px;
+    font-size: 10px;
     line-height: 1.3;
 }
 
