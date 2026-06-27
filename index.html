@@ -1,3 +1,6 @@
+<!-- ==========================================
+     HTML5 APPLICATION ENTRY LAYER (V1.2.3)
+     ========================================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,20 +9,21 @@
     <title>N//S//P — Neon Survival Protocol</title>
     
     <link rel="icon" href="https://fav.farm/🕹️">
-
     <meta name="theme-color" content="#05050d">
 
     <link rel="stylesheet" href="style.css">
-    
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 
+    <!-- React 18 Engine Dependencies -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 
+    <!-- Cloud Authentication & Database SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
+    <!-- Target mounting engine endpoint -->
     <div id="root"></div>
 
     <script src="game.js" defer></script>
