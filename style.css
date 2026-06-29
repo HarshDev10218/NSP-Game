@@ -112,6 +112,41 @@ canvas {
 .time-left { left: 20px; }
 .kill-count { right: 20px; }
 
+/* In-game live combo readout banner */
+.combo-banner-readout {
+    position: absolute;
+    top: 75px;
+    right: 20px;
+    font-size: 16px;
+    font-weight: 900;
+    color: #ffaa00;
+    text-shadow: 0 0 10px #ffaa00;
+    animation: pulse 0.2s infinite alternate;
+}
+
+/* Runtime interactive HUD button layout */
+.hud-interactive-trigger {
+    position: absolute;
+    top: 23px;
+    left: 160px;
+    background: rgba(3,3,7,0.9);
+    border: 1px solid #00f0ff;
+    color: #00f0ff;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 3;
+}
+
+.hud-interactive-trigger:hover {
+    background: #00f0ff;
+    color: #05050d;
+    box-shadow: 0 0 12px #00f0ff;
+}
+
 /* ==========================================
    🖥️ INTERFACE SCREEN OVERLAYS
    ========================================== */
@@ -121,7 +156,7 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(5,5,13,0.95);
+    background: rgba(5,5,13,0.96);
     z-index: 5;
     display: flex;
     flex-direction: column;
@@ -145,6 +180,7 @@ canvas {
 .title-blue { color: #00f0ff; text-shadow: 0 0 15px #00f0ff; }
 .title-red { color: #ff0055; text-shadow: 0 0 15px #ff0055; }
 .title-green { color: #00ff66; text-shadow: 0 0 15px #00ff66; }
+.title-gold { color: #ffaa00; text-shadow: 0 0 15px #ffaa00; }
 
 .summary-text {
     font-size: clamp(11px, 2.2vw, 14px);
@@ -204,34 +240,6 @@ canvas {
 /* ==========================================
    🎮 INTERACTIVE CONTROLS & UTILITIES
    ========================================== */
-.leaderboard-input-box {
-    display: flex;
-    gap: 10px;
-    margin: 4px 0;
-    width: 100%;
-    max-width: 400px;
-    justify-content: center;
-}
-
-.cyber-input {
-    background: #030307;
-    border: 1px solid #ff0055;
-    color: #ff0055;
-    padding: 6px 12px;
-    font-family: inherit;
-    font-weight: bold;
-    font-size: 13px;
-    outline: none;
-    box-shadow: 0 0 8px rgba(255,0,85,0.2);
-    text-align: center;
-    flex: 1;
-    max-width: 180px;
-}
-
-.cyber-input:focus {
-    box-shadow: 0 0 15px #ff0055;
-}
-
 .neon-btn {
     background: transparent;
     border: 2px solid #00f0ff;
@@ -243,6 +251,7 @@ canvas {
     cursor: pointer;
     box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
     transition: all 0.2s;
+    text-align: center;
 }
 
 .neon-btn:hover:not(:disabled) {
@@ -257,18 +266,18 @@ canvas {
 }
 
 /* ==========================================
-   🎛️ HARDWARE AUDIO PANEL
+   🎛️ HARDWARE CONTROLS & METRIC GRIDS
    ========================================== */
 .audio-settings-panel {
     display: flex;
     flex-direction: column;
     gap: 8px;
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
     background: rgba(0, 240, 255, 0.03);
     border: 1px dashed #00f0ff;
     border-radius: 6px;
-    padding: 12px;
+    padding: 14px;
     box-sizing: border-box;
 }
 
@@ -284,7 +293,7 @@ canvas {
 .volume-slider {
     -webkit-appearance: none;
     appearance: none;
-    width: 55%;
+    width: 50%;
     height: 4px;
     background: rgba(255, 0, 85, 0.3);
     border: 1px solid #ff0055;
@@ -301,6 +310,30 @@ canvas {
     cursor: pointer;
     border-radius: 2px;
 }
+
+/* Telemetry statistics layout matrix grid mapping */
+.stats-display-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 500px;
+    background: rgba(5, 5, 13, 0.8);
+    border: 1px solid #ffaa00;
+    padding: 12px;
+    box-sizing: border-box;
+    font-size: 11px;
+}
+
+.stats-grid-cell {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 170, 0, 0.15);
+    padding: 4px 0;
+}
+
+.stats-cell-label { color: #ffaa00; font-weight: bold; }
+.stats-cell-value { color: #fff; font-family: monospace; }
 
 /* ==========================================
    🛒 SHOP SYSTEM VISUAL PANEL
@@ -324,7 +357,7 @@ canvas {
     border: 1px solid #00f0ff;
     padding: 14px;
     border-radius: 4px;
-    max-height: 320px;
+    max-height: 280px;
     overflow-y: auto;
     box-sizing: border-box;
 }
@@ -339,7 +372,6 @@ canvas {
     justify-content: space-between;
     align-items: center;
     text-align: center;
-    transition: all 0.2s ease;
 }
 
 .shop-catalog-card.active-equipped {
@@ -386,11 +418,6 @@ canvas {
     color: #ffaa00;
 }
 
-.shop-action-btn.equip-mode:hover {
-    background: #ffaa00;
-    color: #05050d;
-}
-
 /* ==========================================
    📋 TABLES, INVENTORIES & GRIDS
    ========================================== */
@@ -428,13 +455,6 @@ canvas {
     border: 1px solid #00f0ff;
     padding: 12px;
     cursor: pointer;
-    transition: transform 0.15s ease, background 0.15s ease;
-}
-
-.upgrade-card:hover {
-    transform: scale(1.01);
-    background: #0d0d26;
-    box-shadow: 0 0 12px rgba(0,240,255,0.3);
 }
 
 .card-name {
@@ -448,6 +468,19 @@ canvas {
     color: #bbbbbb;
     font-size: 11px;
     line-height: 1.3;
+}
+
+.cyber-footer {
+    margin-top: auto;
+    padding-top: 10px;
+    width: 100%;
+    max-width: 540px;
+    border-top: 1px dashed rgba(0, 240, 255, 0.2);
+    text-align: center;
+    font-size: 10px;
+    color: #555577;
+    letter-spacing: 1px;
+    font-weight: bold;
 }
 
 /* ==========================================
@@ -486,6 +519,11 @@ canvas {
     transition: transform 0.03s linear;
 }
 
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.05); }
+}
+
 @media (max-width: 800px) {
     .mobile-input-layer {
         display: block;
@@ -493,17 +531,102 @@ canvas {
 }
 
 /* ==========================================
-   👣 ARCADE CYBER FOOTER DESIGN
+   🏆 PROGRESSION & ACHIEVEMENT CATALOG VISUALS
    ========================================== */
-.cyber-footer {
-    margin-top: auto; /* Pushes the footer to the absolute bottom of the flex container */
-    padding-top: 10px;
+.quest-dashboard-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     width: 100%;
     max-width: 540px;
-    border-top: 1px dashed rgba(0, 240, 255, 0.2);
-    text-align: center;
-    font-size: 10px;
-    color: #555577;
-    letter-spacing: 1px;
+    box-sizing: border-box;
+}
+
+.progression-section-header {
+    font-size: 13px;
     font-weight: bold;
+    color: #ffaa00;
+    border-bottom: 1px solid rgba(255, 170, 0, 0.3);
+    padding-bottom: 4px;
+    margin-top: 5px;
+    letter-spacing: 1px;
+    width: 100%;
+    text-align: left;
+}
+
+.progression-card-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid #333;
+    padding: 10px 14px;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 12px;
+}
+
+.progression-card-strip.unlocked-status {
+    border-color: #00ff66;
+    background: rgba(0, 255, 102, 0.02);
+}
+
+.progression-meta-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    flex: 1;
+}
+
+.progression-item-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.progression-card-strip.unlocked-status .progression-item-title {
+    color: #00ff66;
+    text-shadow: 0 0 8px rgba(0, 255, 102, 0.3);
+}
+
+.progression-item-desc {
+    font-size: 10px;
+    color: #888;
+    line-height: 1.3;
+    margin-top: 2px;
+}
+
+.progression-reward-tag {
+    font-size: 11px;
+    font-weight: bold;
+    color: #ffaa00;
+    font-family: monospace;
+    min-width: 85px;
+    text-align: right;
+}
+
+/* Linear progress meter matrices for active objectives */
+.quest-meter-container {
+    width: 100%;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #222;
+    margin-top: 6px;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.quest-meter-fill {
+    height: 100%;
+    background: #ffaa00;
+    box-shadow: 0 0 6px #ffaa00;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progression-card-strip.unlocked-status .quest-meter-fill {
+    background: #00ff66;
+    box-shadow: 0 0 6px #00ff66;
 }
