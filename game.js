@@ -123,8 +123,9 @@ const MASTER_ACHIEVEMENT_REGISTRY = [
 // 🔊 CHIP-TUNE SYNTHESIZER AUDIO CORE
 // ==========================================
 const AudioEngine = {
-    ctx: null, masterVol: 0.5, musicVol: 0.4, sfxVol: 0.5, isMuted: false, musicNode: null,
+    ctx: null, masterVol: 0.5, musicVol: 0.4, sfxVol: 0.5, isMuted: false, musicNode: null, userInteracted: false,
     init() {
+        if (!this.userInteracted) return;
         if (this.ctx) return;
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) return;
@@ -517,8 +518,32 @@ function CyberpunkSurvival() {
         AudioEngine.musicVol = musVolume / 100;
         AudioEngine.sfxVol = sfxVolume / 100;
         AudioEngine.isMuted = muteActive;
-        AudioEngine.setMusicTheme(gameState === 'PLAY' && bossHp.active ? 'BOSS' : gameState);
+        if (AudioEngine.userInteracted) {
+            AudioEngine.setMusicTheme(gameState === 'PLAY' && bossHp.active ? 'BOSS' : gameState);
+        }
     }, [mVolume, musVolume, sfxVolume, muteActive, gameState, bossHp.active]);
+
+    useEffect(() => {
+        if (AudioEngine.userInteracted) return;
+        const unlockAudio = () => {
+            if (!AudioEngine.userInteracted) {
+                AudioEngine.userInteracted = true;
+                AudioEngine.init();
+                AudioEngine.setMusicTheme(gameState === 'PLAY' && bossHp.active ? 'BOSS' : gameState);
+                window.removeEventListener('click', unlockAudio);
+                window.removeEventListener('keydown', unlockAudio);
+                window.removeEventListener('touchstart', unlockAudio);
+            }
+        };
+        window.addEventListener('click', unlockAudio);
+        window.addEventListener('keydown', unlockAudio);
+        window.addEventListener('touchstart', unlockAudio);
+        return () => {
+            window.removeEventListener('click', unlockAudio);
+            window.removeEventListener('keydown', unlockAudio);
+            window.removeEventListener('touchstart', unlockAudio);
+        };
+    }, [gameState, bossHp.active]);
 
     useEffect(() => {
         const handleGlobalPauseKeyListener = (e) => {
@@ -569,7 +594,8 @@ function CyberpunkSurvival() {
                 const hasFrostAbility = equippedAbility === 'ability_ice';
                 const hasLuckAbility = equippedAbility === 'ability_luck';
 
-                p.speedMult = activeTrailMods.speed; 
+                const comboSpeedBuff = Math.min(1.3, 1 + (metrics.currentCombo * 0.01));
+                p.speedMult = activeTrailMods.speed * comboSpeedBuff;
                 if (p.flashTime > 0) p.flashTime -= frameRatio;
                 if (metrics.screenShakeIntensity > 0) metrics.screenShakeIntensity -= 0.4 * frameRatio;
 
@@ -635,12 +661,13 @@ function CyberpunkSurvival() {
                 let spawnThreshold = currentSec > 120 ? 22 : (currentSec > 60 ? 35 : 48);
                 if (metrics.tickTracker >= spawnThreshold && !bossActive) {
                     metrics.tickTracker = 0; const angle = Math.random() * Math.PI * 2; const sx = p.x + Math.cos(angle) * 540; const sy = p.y + Math.sin(angle) * 540;
-                    let pool = ['drone', 'drone']; if (currentSec >= 30) pool.push('breacher', 'breacher'); if (currentSec >= 65) pool.push('hound'); if (currentSec >= 110) pool.push('goliath');
+                    let pool = ['drone', 'drone']; if (currentSec >= 30) pool.push('breacher', 'breacher'); if (currentSec >= 65) pool.push('hound'); if (currentSec >= 90) pool.push('sniper'); if (currentSec >= 110) pool.push('goliath');
                     const chosen = pool[Math.floor(Math.random() * pool.length)];
                     let enemyConfig = { x: sx, y: sy, type: chosen, dead: false, state: 'chase', timer: 0, freezeFactor: 1.0, flashTime: 0 };
                     if (chosen === 'drone') { enemyConfig.hp = Math.floor(1 * difficultyMod); enemyConfig.speed = 1.6; enemyConfig.r = 11; enemyConfig.color = '#ff0055'; enemyConfig.shape = 'sq'; }
                     if (chosen === 'breacher') { enemyConfig.hp = Math.floor(2 * difficultyMod); enemyConfig.speed = 3.2; enemyConfig.r = 10; enemyConfig.color = '#ffaa00'; enemyConfig.shape = 'tri'; }
                     if (chosen === 'hound') { enemyConfig.hp = Math.floor(3 * difficultyMod); enemyConfig.speed = 2.4; enemyConfig.r = 12; enemyConfig.color = '#ff00aa'; enemyConfig.shape = 'tri'; }
+                    if (chosen === 'sniper') { enemyConfig.hp = Math.floor(4 * difficultyMod); enemyConfig.speed = 1.8; enemyConfig.r = 12; enemyConfig.color = '#00ff66'; enemyConfig.shape = 'pent'; }
                     if (chosen === 'goliath') { enemyConfig.hp = Math.floor(28 * difficultyMod); enemyConfig.speed = 0.7; enemyConfig.r = 24; enemyConfig.color = '#00f0ff'; enemyConfig.shape = 'oct'; }
                     enemyConfig.maxHp = enemyConfig.hp; enemiesRef.current.push(enemyConfig);
                 }
@@ -679,6 +706,19 @@ function CyberpunkSurvival() {
                                     }
                                 }
                             }
+                        } else if (e.type === 'sniper') {
+                            if (distToPlayer > 250) {
+                                e.x += Math.cos(angle) * trueCalculatedSpeed; e.y += Math.sin(angle) * trueCalculatedSpeed;
+                            } else if (distToPlayer < 150) {
+                                e.x -= Math.cos(angle) * trueCalculatedSpeed; e.y -= Math.sin(angle) * trueCalculatedSpeed;
+                            }
+
+                            e.timer -= frameRatio;
+                            if (e.timer <= 0) {
+                                projectilesRef.current.push({ x: e.x, y: e.y, vx: Math.cos(angle) * 7, vy: Math.sin(angle) * 7, radius: 4, laser: false, dead: false, isEnemy: true });
+                                e.timer = 120 + Math.random() * 60; // shoot every 2-3 seconds
+                                AudioEngine.playSFX('shoot');
+                            }
                         } else { e.x += Math.cos(angle) * trueCalculatedSpeed; e.y += Math.sin(angle) * trueCalculatedSpeed; }
                     }
 
@@ -691,7 +731,15 @@ function CyberpunkSurvival() {
                         proj.duration -= frameRatio; enemiesRef.current.forEach(e => { let dx = e.x - proj.x, dy = e.y - proj.y; let dot = dx * Math.cos(proj.angle) + dy * Math.sin(proj.angle); if (dot > 0 && dot < proj.length && Math.hypot(e.x - (proj.x + Math.cos(proj.angle)*dot), e.y - (proj.y + Math.sin(proj.angle)*dot)) < e.r + proj.width/2) { e.hp -= 0.35 * frameRatio; e.flashTime = 2; if (hasFrostAbility) e.freezeFactor = 0.5; } }); if (proj.duration <= 0) proj.dead = true;
                     } else {
                         proj.x += proj.vx * frameRatio; proj.y += proj.vy * frameRatio;
-                        for (let e of enemiesRef.current) { if (Math.hypot(proj.x - e.x, proj.y - e.y) < proj.radius + e.r) { proj.dead = true; e.hp -= 1; e.flashTime = 3; if (hasFrostAbility) e.freezeFactor = 0.5; floatingTextsRef.current.push({ x: e.x, y: e.y - 10, text: "1", color: '#00f0ff', alpha: 1, scale: 0.9 }); AudioEngine.playSFX('hit'); break; } } if (Math.hypot(proj.x - p.x, proj.y - p.y) > 900) proj.dead = true;
+                        if (proj.isEnemy) {
+                            if (Math.hypot(proj.x - p.x, proj.y - p.y) < proj.radius + p.radius) {
+                                proj.dead = true; p.health = Math.max(0, p.health - 12); p.flashTime = 5; AudioEngine.playSFX('damage');
+                                if (cfgScreenShake) metrics.screenShakeIntensity = 8;
+                            }
+                        } else {
+                            for (let e of enemiesRef.current) { if (Math.hypot(proj.x - e.x, proj.y - e.y) < proj.radius + e.r) { proj.dead = true; e.hp -= 1; e.flashTime = 3; if (hasFrostAbility) e.freezeFactor = 0.5; floatingTextsRef.current.push({ x: e.x, y: e.y - 10, text: "1", color: '#00f0ff', alpha: 1, scale: 0.9 }); AudioEngine.playSFX('hit'); break; } }
+                        }
+                        if (Math.hypot(proj.x - p.x, proj.y - p.y) > 900) proj.dead = true;
                     }
                 });
 
@@ -714,8 +762,9 @@ function CyberpunkSurvival() {
                     if (e.hp <= 0) {
                         e.dead = true; if (e.hp !== -10) { metrics.killCounter++; metrics.currentCombo++; metrics.comboDecayTimer = 0; if (metrics.currentCombo > metrics.highestComboThisRun) metrics.highestComboThisRun = metrics.currentCombo; }
                         if (e.hp !== -10) {
-                            let baseValueCollected = 0; if (e.type === 'drone') baseValueCollected = 5; else if (e.type === 'breacher') baseValueCollected = 10; else if (e.type === 'hound') baseValueCollected = 10; else if (e.type === 'goliath') baseValueCollected = 15; else if (e.type === 'boss') baseValueCollected = 100;
-                            const finalCalculatedCoins = Math.ceil(baseValueCollected * activeTrailMods.coin); metrics.coinsEarnedThisRun += finalCalculatedCoins;
+                            let baseValueCollected = 0; if (e.type === 'drone') baseValueCollected = 5; else if (e.type === 'breacher') baseValueCollected = 10; else if (e.type === 'hound') baseValueCollected = 10; else if (e.type === 'sniper') baseValueCollected = 12; else if (e.type === 'goliath') baseValueCollected = 15; else if (e.type === 'boss') baseValueCollected = 100;
+                            const comboCoinMultiplier = 1 + (metrics.currentCombo * 0.05);
+                            const finalCalculatedCoins = Math.ceil(baseValueCollected * activeTrailMods.coin * comboCoinMultiplier); metrics.coinsEarnedThisRun += finalCalculatedCoins;
                             floatingTextsRef.current.push({ x: e.x, y: e.y - 20, text: `+${finalCalculatedCoins}`, color: '#ffaa00', alpha: 1, scale: 1.1 });
                         }
                         setHud(prev => ({ ...prev, kills: metrics.killCounter, coins: activeCoinWallet + metrics.coinsEarnedThisRun, combo: metrics.currentCombo }));
@@ -748,8 +797,8 @@ function CyberpunkSurvival() {
 
             // Render Modules
             gemsRef.current.forEach(g => { ctx.save(); ctx.fillStyle = g.type === 'heart' ? '#ff0055' : (g.val > 1 ? '#00ffff' : '#00ff66'); ctx.shadowBlur = cfgHighContrast ? 0 : 8; ctx.shadowColor = ctx.fillStyle; ctx.beginPath(); ctx.arc(g.x - cx, g.y - cy, g.type==='heart'?6:3.5, 0, Math.PI*2); ctx.fill(); ctx.restore(); });
-            projectilesRef.current.forEach(pItem => { ctx.save(); ctx.shadowBlur = cfgHighContrast ? 0 : 10; ctx.shadowColor = pItem.laser ? '#9900ff' : '#00f0ff'; if (pItem.laser) { ctx.strokeStyle = '#9900ff'; ctx.lineWidth = pItem.width * (pItem.duration / 20); ctx.beginPath(); ctx.moveTo(pItem.x - cx, pItem.y - cy); ctx.lineTo((pItem.x + Math.cos(pItem.angle)*pItem.length) - cx, (pItem.y + Math.sin(pItem.angle)*pItem.length) - cy); ctx.stroke(); } else { ctx.fillStyle = '#00f0ff'; ctx.beginPath(); ctx.arc(pItem.x - cx, pItem.y - cy, pItem.radius, 0, Math.PI*2); ctx.fill(); } ctx.restore(); });
-            enemiesRef.current.forEach(e => { ctx.save(); ctx.shadowBlur = cfgHighContrast ? 0 : 8; ctx.shadowColor = e.color; ctx.strokeStyle = e.color; ctx.fillStyle = e.flashTime > 0 ? '#ffffff' : (e.type==='breacher'&&e.state==='detonating'&&(Math.floor(performance.now()/50)%2===0)?'#ff0000':'#030307'); ctx.lineWidth = 2; ctx.beginPath(); if (e.shape === 'sq') { ctx.strokeRect(e.x - e.r - cx, e.y - e.r - cy, e.r*2, e.r*2); ctx.fillRect(e.x - e.r - cx, e.y - e.r - cy, e.r*2, e.r*2); } else if (e.shape === 'tri') { ctx.moveTo(e.x - cx, e.y - e.r - cy); ctx.lineTo(e.x + e.r - cx, e.y + e.r - cy); ctx.lineTo(e.x - e.r - cx, e.y + e.r - cy); ctx.closePath(); ctx.fill(); ctx.stroke(); } else { for (let i=0; i<8; i++) { let a = (Math.PI*2/8)*i - Math.PI/2; ctx.lineTo(e.x + Math.cos(a)*e.r - cx, e.y + Math.sin(a)*e.r - cy); } ctx.closePath(); ctx.fill(); ctx.stroke(); } ctx.restore(); });
+            projectilesRef.current.forEach(pItem => { ctx.save(); ctx.shadowBlur = cfgHighContrast ? 0 : 10; ctx.shadowColor = pItem.laser ? '#9900ff' : (pItem.isEnemy ? '#00ff66' : '#00f0ff'); if (pItem.laser) { ctx.strokeStyle = '#9900ff'; ctx.lineWidth = pItem.width * (pItem.duration / 20); ctx.beginPath(); ctx.moveTo(pItem.x - cx, pItem.y - cy); ctx.lineTo((pItem.x + Math.cos(pItem.angle)*pItem.length) - cx, (pItem.y + Math.sin(pItem.angle)*pItem.length) - cy); ctx.stroke(); } else { ctx.fillStyle = pItem.isEnemy ? '#00ff66' : '#00f0ff'; ctx.beginPath(); ctx.arc(pItem.x - cx, pItem.y - cy, pItem.radius, 0, Math.PI*2); ctx.fill(); } ctx.restore(); });
+            enemiesRef.current.forEach(e => { ctx.save(); ctx.shadowBlur = cfgHighContrast ? 0 : 8; ctx.shadowColor = e.color; ctx.strokeStyle = e.color; ctx.fillStyle = e.flashTime > 0 ? '#ffffff' : (e.type==='breacher'&&e.state==='detonating'&&(Math.floor(performance.now()/50)%2===0)?'#ff0000':'#030307'); ctx.lineWidth = 2; ctx.beginPath(); if (e.shape === 'sq') { ctx.strokeRect(e.x - e.r - cx, e.y - e.r - cy, e.r*2, e.r*2); ctx.fillRect(e.x - e.r - cx, e.y - e.r - cy, e.r*2, e.r*2); } else if (e.shape === 'tri') { ctx.moveTo(e.x - cx, e.y - e.r - cy); ctx.lineTo(e.x + e.r - cx, e.y + e.r - cy); ctx.lineTo(e.x - e.r - cx, e.y + e.r - cy); ctx.closePath(); ctx.fill(); ctx.stroke(); } else if (e.shape === 'pent') { for (let i = 0; i < 5; i++) { let a = (Math.PI*2/5)*i - Math.PI/2; ctx.lineTo(e.x + Math.cos(a)*e.r - cx, e.y + Math.sin(a)*e.r - cy); } ctx.closePath(); ctx.fill(); ctx.stroke(); } else { for (let i=0; i<8; i++) { let a = (Math.PI*2/8)*i - Math.PI/2; ctx.lineTo(e.x + Math.cos(a)*e.r - cx, e.y + Math.sin(a)*e.r - cy); } ctx.closePath(); ctx.fill(); ctx.stroke(); } ctx.restore(); });
             if (cfgParticles) { particlesRef.current.forEach(pt => { ctx.save(); ctx.globalAlpha = pt.alpha; ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x - cx, pt.y - cy, pt.r, 0, Math.PI*2); ctx.fill(); ctx.restore(); }); }
 
             // --- HYBRID CHASSIS VECTOR/TEXT RENDERING CHANNEL ---
