@@ -204,6 +204,32 @@ const AudioEngine = {
     stopMusic() { if (this.loopTimer) clearTimeout(this.loopTimer); if (this.musicNode) { try { this.musicNode.stop(); } catch(e){} this.musicNode = null; } }
 };
 
+
+// ==========================================
+// 🗺️ MAP CONFIGURATIONS & PROGRESSION
+// ==========================================
+const MAP_CONFIGS = [
+    { name: "Neon City", theme: "Blue and purple cyberpunk city", gridColor: "#121226", particleColor: "#00f0ff", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Desert Outpost", theme: "Sand dunes", gridColor: "#332211", particleColor: "#ffcc00", friction: 0.95, enemySpeedMod: 1.1 },
+    { name: "Frozen Wasteland", theme: "Snowstorm", gridColor: "#112233", particleColor: "#ffffff", friction: 0.8, enemySpeedMod: 1.2 },
+    { name: "Toxic Laboratory", theme: "Underground facility", gridColor: "#113311", particleColor: "#00ff00", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Cyber Factory", theme: "Giant factory", gridColor: "#222222", particleColor: "#aaaaaa", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Ancient Temple", theme: "Lost ruins", gridColor: "#2a3b2a", particleColor: "#88cc88", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Haunted Graveyard", theme: "Night fog", gridColor: "#1a1a2e", particleColor: "#555577", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Volcano Core", theme: "Lava world", gridColor: "#3b1111", particleColor: "#ff4400", friction: 1.0, enemySpeedMod: 1.1 },
+    { name: "Sky Islands", theme: "Floating islands", gridColor: "#113355", particleColor: "#aaddff", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Underwater Base", theme: "Ocean research", gridColor: "#0a1a3a", particleColor: "#00aaff", friction: 1.2, enemySpeedMod: 0.9 },
+    { name: "Space Station", theme: "Orbiting station", gridColor: "#050510", particleColor: "#ffffff", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Alien Planet", theme: "Purple landscape", gridColor: "#220033", particleColor: "#aa00ff", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Crystal Caverns", theme: "Underground crystal cave", gridColor: "#111133", particleColor: "#00ffff", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Dark Dimension", theme: "Shadow world", gridColor: "#0d001a", particleColor: "#330066", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Final Nexus", theme: "Ultimate futuristic arena", gridColor: "#330033", particleColor: "#ff00ff", friction: 1.0, enemySpeedMod: 1.2 }
+];
+
+const DYNAMIC_EVENTS = ['Meteor Shower', 'Heavy Rain', 'Thunderstorm', 'Blizzard', 'Sandstorm', 'Toxic Gas Leak', 'Solar Eclipse', 'Earthquake', 'Blackout', 'Alien Invasion'];
+const INTERACTIVE_OBJECTS = ['Treasure Chest', 'Healing Fountain', 'Supply Crate', 'Teleporter', 'Bounce Pad', 'Shield Generator', 'Speed Boost Zone', 'Explosive Barrel', 'Turret', 'Hidden Secret Room'];
+const NPC_TYPES = ['Merchant', 'Mechanic', 'Scientist', 'Medic', 'Survivor', 'Blacksmith', 'Drone Assistant', 'Quest Giver'];
+
 // ==========================================
 // 🕹️ MAIN SIMULATION ENGINE PLAYSPACE
 // ==========================================
@@ -213,6 +239,11 @@ function CyberpunkSurvival() {
 
     const [gameState, setGameState] = useState('START_SCREEN');
     const [hud, setHud] = useState({ health: 100, level: 1, xp: 0, xpNeeded: 12, kills: 0, time: "00:00", coins: 0, combo: 0 });
+
+    const mapStateRef = useRef({ mapIndex: 0, nextMapAt: 60, currentEvent: null, eventTimer: 0, showBanner: false, bannerTimer: 0 });
+    const interactiveObjectsRef = useRef([]);
+    const npcsRef = useRef([]);
+
     const [bossHp, setBossHp] = useState({ current: 0, max: 250, active: false });
     const [cards, setCards] = useState([]);
 
@@ -509,6 +540,11 @@ function CyberpunkSurvival() {
         enemiesRef.current = []; projectilesRef.current = []; gemsRef.current = []; particlesRef.current = []; floatingTextsRef.current = [];
         gameMetrics.current = { accumTime: 0, clockSeconds: 0, killCounter: 0, bossesKilled: 0, coinsEarnedThisRun: 0, currentCombo: 0, highestComboThisRun: 0, totalPowerupsThisRun: 0, screenShakeIntensity: 0 };
         touchVectorRef.current = { x: 0, y: 0 }; bossSpawnedForCurrentMilestone.current = false; lastTimestamp.current = performance.now();
+
+        mapStateRef.current = { mapIndex: 0, nextMapAt: 60, currentEvent: null, eventTimer: 0, showBanner: false, bannerTimer: 0 };
+        interactiveObjectsRef.current = [];
+        npcsRef.current = [];
+
         setScoreSubmitted(false); setShowStartLeaderboard(false); isSelectionLocked.current = false; setFinalUpgradesManifest([]);
         Object.keys(upgradesRef.current).forEach(k => upgradesRef.current[k].lvl = 0); setBossHp({ current: 0, max: 250, active: false });
         setHud({ health: p.maxHealth, maxHealth: p.maxHealth, level: 1, xp: 0, xpNeeded: 12, kills: 0, time: "00:00", coins: activeCoinWallet, combo: 0 });
@@ -600,6 +636,9 @@ function CyberpunkSurvival() {
 
             if (gameState === 'PLAY') {
                 const metrics = gameMetrics.current;
+
+
+
                 const activeTrailMods = TRAIL_MODIFIERS[equippedTrail] || { speed: 1.0, coin: 1.0 };
                 const hasBlazeAbility = false;
                 const hasFrostAbility = false;
@@ -618,6 +657,172 @@ function CyberpunkSurvival() {
                         metrics.coinsEarnedThisRun += calculated_payamt;
                         floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: `+${calculated_payamt} BONUS`, color: '#ffaa00', alpha: 1, scale: 1.2 });
                     }
+
+                    // Map Progression Logic
+                    if (metrics.clockSeconds >= mapStateRef.current.nextMapAt && mapStateRef.current.mapIndex < MAP_CONFIGS.length - 1) {
+                        mapStateRef.current.nextMapAt += 60; // Progress map every 60 seconds
+                        mapStateRef.current.showBanner = true;
+                        mapStateRef.current.bannerTimer = 180;
+                    }
+                    if (mapStateRef.current.showBanner) {
+                        mapStateRef.current.bannerTimer--;
+                        // Only change the map index at the peak of the fade (90 frames)
+                        if (mapStateRef.current.bannerTimer === 90) {
+                            mapStateRef.current.mapIndex++;
+                        }
+                        if (mapStateRef.current.bannerTimer <= 0) mapStateRef.current.showBanner = false;
+                    }
+
+                    // Dynamic Events Logic
+                    if (mapStateRef.current.eventTimer > 0) {
+                        mapStateRef.current.eventTimer -= 1;
+                        if (mapStateRef.current.eventTimer <= 0) {
+                            mapStateRef.current.currentEvent = null;
+                        }
+                    } else if (Math.random() < 0.005) { // periodic event
+                        mapStateRef.current.currentEvent = DYNAMIC_EVENTS[Math.floor(Math.random() * DYNAMIC_EVENTS.length)];
+                        mapStateRef.current.eventTimer = 900; // Event lasts 15 seconds (60fps)
+                        floatingTextsRef.current.push({ x: p.x, y: p.y - 60, text: `EVENT: ${mapStateRef.current.currentEvent}`, color: '#ff00ff', alpha: 1, scale: 1.5 });
+                    }
+
+                    // Interactive Objects & NPCs Spawning
+                    if (Math.random() < 0.005) {
+                        const type = INTERACTIVE_OBJECTS[Math.floor(Math.random() * INTERACTIVE_OBJECTS.length)];
+                        interactiveObjectsRef.current.push({
+                            x: p.x + (Math.random() * 800 - 400),
+                            y: p.y + (Math.random() * 800 - 400),
+                            type: type,
+                            r: 15,
+                            active: true
+                        });
+                    }
+                    if (Math.random() < 0.002) {
+                        const type = NPC_TYPES[Math.floor(Math.random() * NPC_TYPES.length)];
+                        npcsRef.current.push({
+                            x: p.x + (Math.random() * 800 - 400),
+                            y: p.y + (Math.random() * 800 - 400),
+                            type: type,
+                            r: 18,
+                            active: true
+                        });
+                    }
+
+                    // Interactive Objects Logic
+                    interactiveObjectsRef.current.forEach(obj => {
+                        if (obj.active && Math.hypot(p.x - obj.x, p.y - obj.y) < p.radius + obj.r + 10) {
+                            obj.active = false;
+                            AudioEngine.playSFX('powerup');
+                            if (obj.type.includes('Chest') || obj.type.includes('Crate')) {
+                                metrics.coinsEarnedThisRun += 200;
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: `+200 COINS`, color: '#ffaa00', alpha: 1, scale: 1.2 });
+                            } else if (obj.type.includes('Fountain')) {
+                                p.health = p.maxHealth;
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: `FULL HEAL`, color: '#ff0055', alpha: 1, scale: 1.2 });
+                            } else if (obj.type.includes('Bounce Pad')) {
+                                p.x += p.lastDir.x * 200; p.y += p.lastDir.y * 200;
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: "BOING!", color: '#00f0ff', alpha: 1, scale: 1.2 });
+                            } else if (obj.type.includes('Speed Boost')) {
+                                p.speedMult += 0.5;
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: "SPEED UP!", color: '#00ff66', alpha: 1, scale: 1.2 });
+                            } else if (obj.type.includes('Explosive Barrel')) {
+                                AudioEngine.playSFX('explosion');
+                                if (cfgScreenShake) metrics.screenShakeIntensity = 15;
+                                enemiesRef.current.forEach(e => {
+                                    if (Math.hypot(e.x - obj.x, e.y - obj.y) < 150) {
+                                        e.hp -= 20; e.flashTime = 5;
+                                    }
+                                });
+                                floatingTextsRef.current.push({ x: obj.x, y: obj.y - 30, text: "BOOM!", color: '#ff4400', alpha: 1, scale: 1.5 });
+                            } else if (obj.type.includes('Shield Generator')) {
+                                upgradesRef.current.shield.lvl++;
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: "SHIELDS UP!", color: '#00aaff', alpha: 1, scale: 1.2 });
+                            } else if (obj.type.includes('Turret')) {
+                                AudioEngine.playSFX('shoot');
+                                for (let i = 0; i < 8; i++) {
+                                    projectilesRef.current.push({ x: obj.x, y: obj.y, vx: Math.cos(Math.PI/4 * i) * 15, vy: Math.sin(Math.PI/4 * i) * 15, radius: 6, laser: false, dead: false });
+                                }
+                                floatingTextsRef.current.push({ x: obj.x, y: obj.y - 30, text: "TURRET FIRED!", color: '#00ff66', alpha: 1, scale: 1.2 });
+                            } else if (obj.type.includes('Teleporter') || obj.type.includes('Hidden Secret Room')) {
+                                p.x += (Math.random() * 800 - 400); p.y += (Math.random() * 800 - 400);
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: "WARPED!", color: '#9900ff', alpha: 1, scale: 1.2 });
+                            } else {
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: obj.type.toUpperCase(), color: '#00f0ff', alpha: 1, scale: 1.0 });
+                            }
+                        }
+                    });
+
+                    // NPC Logic
+                    npcsRef.current.forEach(npc => {
+                        if (npc.active && Math.hypot(p.x - npc.x, p.y - npc.y) < p.radius + npc.r + 10) {
+                            npc.active = false;
+                            AudioEngine.playSFX('powerup');
+                            if (npc.type === 'Merchant' || npc.type === 'Blacksmith') {
+                                upgradesRef.current.attackSpeed.lvl++;
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: "WEAPON UPGRADED!", color: '#ffaa00', alpha: 1, scale: 1.2 });
+                            } else if (npc.type === 'Medic' || npc.type === 'Survivor') {
+                                p.health = Math.min(p.maxHealth, p.health + 40);
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: "+40 HP", color: '#ff0055', alpha: 1, scale: 1.2 });
+                            } else if (npc.type === 'Scientist' || npc.type === 'Mechanic') {
+                                upgradesRef.current.laser.lvl++;
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: "LASER UPGRADED!", color: '#00ffff', alpha: 1, scale: 1.2 });
+                            } else if (npc.type === 'Drone Assistant' || npc.type === 'Quest Giver') {
+                                p.xp = p.xpNeeded;
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: "WISDOM GAINED!", color: '#00ff66', alpha: 1, scale: 1.2 });
+                            } else {
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: npc.type.toUpperCase() + " GREETS YOU!", color: '#00ff66', alpha: 1, scale: 1.0 });
+                            }
+                        }
+                    });
+
+                    interactiveObjectsRef.current = interactiveObjectsRef.current.filter(o => o.active);
+                    npcsRef.current = npcsRef.current.filter(n => n.active);
+
+                    // Environmental Hazards Mechanics
+                    const currentMap = MAP_CONFIGS[mapStateRef.current.mapIndex];
+                    if (currentMap.name === "Toxic Laboratory" || currentMap.name === "Alien Planet") {
+                        if (Math.random() < 0.05) p.health = Math.max(0, p.health - 0.15 * frameRatio); // Ambient damage
+                    } else if (currentMap.name === "Cyber Factory") {
+                        p.x += 1.0 * frameRatio; // Conveyor belt pushes right
+                    } else if (currentMap.name === "Sky Islands") {
+                        p.x -= 0.5 * frameRatio; p.y -= 0.5 * frameRatio; // Wind pushes
+                    } else if (currentMap.name === "Volcano Core") {
+                        if (Math.random() < 0.01) { // Falling meteors
+                            projectilesRef.current.push({ x: p.x + (Math.random()*400-200), y: p.y - 400, vx: 0, vy: 8, radius: 12, laser: false, dead: false, isEnemy: true });
+                        }
+                    } else if (currentMap.name === "Dark Dimension") {
+                        if (Math.random() < 0.005) { // Random teleport
+                            p.x += (Math.random() * 400 - 200); p.y += (Math.random() * 400 - 200);
+                        }
+                    }
+
+                    const event = mapStateRef.current.currentEvent;
+                    if (event === 'Thunderstorm' && Math.random() < 0.05) {
+                         if (cfgScreenShake) metrics.screenShakeIntensity = 10;
+                         if (Math.random() < 0.2) p.flashTime = 5; // Lightning flash
+                    } else if (event === 'Toxic Gas Leak') {
+                         p.health = Math.max(0, p.health - 0.05 * frameRatio);
+                    } else if (event === 'Meteor Shower' && Math.random() < 0.02) {
+                         projectilesRef.current.push({ x: p.x + (Math.random()*600-300), y: p.y - 400, vx: 0, vy: 10, radius: 15, laser: false, dead: false, isEnemy: true });
+                    } else if (event === 'Heavy Rain' || event === 'Blizzard') {
+                         // Rain/Snow particles
+                         if (cfgParticles && Math.random() < 0.8) particlesRef.current.push({ x: p.x + (Math.random()*1000-500), y: p.y - 400, vx: (event === 'Blizzard' ? 5 : 2), vy: (event === 'Blizzard' ? 5 : 12), r: (event === 'Blizzard' ? 4 : 1), alpha: 0.6, color: (event === 'Blizzard' ? '#ffffff' : '#aaddff') });
+                    } else if (event === 'Sandstorm') {
+                         p.speedMult *= 0.8; // Slow down
+                         if (cfgParticles && Math.random() < 0.8) particlesRef.current.push({ x: p.x - 500, y: p.y + (Math.random()*800-400), vx: 15, vy: 2, r: 3, alpha: 0.4, color: '#ffcc00' });
+                    } else if (event === 'Solar Eclipse') {
+                         // Screen gets darker (handled in render loop normally, but let's just do a small visual flash here or nothing mechanically)
+                         if (Math.random() < 0.01) p.flashTime = 2;
+                    } else if (event === 'Earthquake') {
+                         if (cfgScreenShake) metrics.screenShakeIntensity = 8;
+                         p.speedMult *= 0.7; // Hard to walk
+                    } else if (event === 'Blackout') {
+                         // Just mechanically, maybe weapons cool down slower
+                         p.fireCooldown += 0.2 * frameRatio;
+                    } else if (event === 'Alien Invasion' && Math.random() < 0.05) {
+                         // Spawn extra enemies
+                         enemiesRef.current.push({ x: p.x + (Math.random()*800-400), y: p.y - 500, type: 'drone', hp: 10, maxHp: 10, speed: 2, r: 12, color: '#aa00ff', shape: 'hex', dead: false, freezeFactor: 1.0, flashTime: 0 });
+                    }
+
                     const min = Math.floor(metrics.clockSeconds / 60).toString().padStart(2, '0');
                     const sec = (metrics.clockSeconds % 60).toString().padStart(2, '0');
                     setHud(prev => ({ ...prev, time: `${min}:${sec}`, coins: activeCoinWallet + metrics.coinsEarnedThisRun }));
@@ -636,13 +841,21 @@ function CyberpunkSurvival() {
 
                 if (mx !== 0 || my !== 0) {
                     const len = Math.hypot(mx, my); const nX = mx / len; const nY = my / len;
-                    p.x += nX * (p.baseSpeed * p.speedMult) * frameRatio; p.y += nY * (p.baseSpeed * p.speedMult) * frameRatio; p.lastDir = { x: nX, y: nY };
-                    if (cfgParticles && Math.random() < 0.4) { particlesRef.current.push({ x: p.x, y: p.y, vx: -nX * 2, vy: -nY * 2, r: 2.5, alpha: 0.8, color: '#00f0ff' }); }
+
+                    const mapConfig = MAP_CONFIGS[mapStateRef.current.mapIndex];
+                    const mapSpeedMod = mapConfig.friction || 1.0;
+                    p.x += nX * (p.baseSpeed * p.speedMult * mapSpeedMod) * frameRatio; p.y += nY * (p.baseSpeed * p.speedMult * mapSpeedMod) * frameRatio; p.lastDir = { x: nX, y: nY };
+                    if (cfgParticles && Math.random() < 0.4) { particlesRef.current.push({ x: p.x, y: p.y, vx: -nX * 2, vy: -nY * 2, r: 2.5, alpha: 0.8, color: mapConfig.particleColor }); }
+
                 } else if (touchVectorRef.current.x !== 0 || touchVectorRef.current.y !== 0) {
                     const tx = touchVectorRef.current.x; const ty = touchVectorRef.current.y;
-                    p.x += tx * (p.baseSpeed * p.speedMult) * frameRatio; p.y += ty * (p.baseSpeed * p.speedMult) * frameRatio;
+
+                    const mapConfig = MAP_CONFIGS[mapStateRef.current.mapIndex];
+                    const mapSpeedMod = mapConfig.friction || 1.0;
+                    p.x += tx * (p.baseSpeed * p.speedMult * mapSpeedMod) * frameRatio; p.y += ty * (p.baseSpeed * p.speedMult * mapSpeedMod) * frameRatio;
                     const touchLen = Math.hypot(tx, ty);
-                    if (touchLen > 0.1) { p.lastDir = { x: tx / touchLen, y: ty / touchLen }; if (cfgParticles && Math.random() < 0.4) { particlesRef.current.push({ x: p.x, y: p.y, vx: -(tx / touchLen) * 2, vy: -(ty / touchLen) * 2, r: 2.5, alpha: 0.8, color: '#00f0ff' }); } }
+                    if (touchLen > 0.1) { p.lastDir = { x: tx / touchLen, y: ty / touchLen }; if (cfgParticles && Math.random() < 0.4) { particlesRef.current.push({ x: p.x, y: p.y, vx: -(tx / touchLen) * 2, vy: -(ty / touchLen) * 2, r: 2.5, alpha: 0.8, color: mapConfig.particleColor }); } }
+
                 }
 
                 cameraRef.current.x = p.x - logicalWidth / 2; cameraRef.current.y = p.y - logicalHeight / 2;
@@ -692,7 +905,10 @@ function CyberpunkSurvival() {
                 } else { bossSpawnedForCurrentMilestone.current = false; }
 
                 enemiesRef.current.forEach(e => {
-                    const distToPlayer = Math.hypot(p.y - e.y, p.x - e.x); const trueCalculatedSpeed = e.speed * e.freezeFactor * frameRatio; if (e.flashTime > 0) e.flashTime -= frameRatio;
+
+                    const mapConfig = MAP_CONFIGS[mapStateRef.current.mapIndex];
+                    const distToPlayer = Math.hypot(p.y - e.y, p.x - e.x); const trueCalculatedSpeed = e.speed * e.freezeFactor * frameRatio * (mapConfig.enemySpeedMod || 1.0); if (e.flashTime > 0) e.flashTime -= frameRatio;
+
                     if (e.type === 'boss') {
                         e.bossActionTimer -= frameRatio; const isBossPhase2 = e.hp <= (e.maxHp * 0.5); const calculatedActionSpeedMultiplier = isBossPhase2 ? 1.45 : 1.0;
                         if (e.state === 'normal') {
@@ -800,11 +1016,77 @@ function CyberpunkSurvival() {
             if (cfgScreenShake && gameMetrics.current.screenShakeIntensity > 0) { ctx.translate((Math.random() - 0.5) * gameMetrics.current.screenShakeIntensity, (Math.random() - 0.5) * gameMetrics.current.screenShakeIntensity); }
             ctx.scale(scaleX, scaleY); const cx = cameraRef.current.x, cy = cameraRef.current.y;
 
+
             // Map Grid Layout Systems
-            ctx.save(); ctx.strokeStyle = cfgHighContrast ? '#22223b' : '#121226'; ctx.lineWidth = 1;
+            ctx.save();
+            const currentMapConfig = MAP_CONFIGS[mapStateRef.current.mapIndex];
+            ctx.fillStyle = currentMapConfig.gridColor;
+            ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+
+            ctx.strokeStyle = cfgHighContrast ? '#22223b' : '#121226'; ctx.lineWidth = 1;
             for (let x = -(cx % 50); x < logicalWidth; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, logicalHeight); ctx.stroke(); }
             for (let y = -(cy % 50); y < logicalHeight; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(logicalWidth, y); ctx.stroke(); }
             ctx.restore();
+
+            // Render Map Decorations (Specific to map theme)
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            for (let i=0; i<15; i++) {
+                let decX = ((i*150 - cx * 0.5) % 800 + 800) % 800;
+                let decY = ((i*100 - cy * 0.5) % 600 + 600) % 600;
+
+                if (currentMapConfig.name.includes("Neon City")) {
+                    ctx.fillStyle = i % 2 === 0 ? '#00f0ff' : '#ff0055';
+                    ctx.fillRect(decX, decY, 15, 60); // Building/billboard
+                } else if (currentMapConfig.name.includes("Desert") || currentMapConfig.name.includes("Volcano")) {
+                    ctx.fillStyle = currentMapConfig.name.includes("Desert") ? '#ffaa00' : '#ff4400';
+                    ctx.beginPath(); ctx.arc(decX, decY, 20, 0, Math.PI); ctx.fill(); // Rock/Dune
+                } else if (currentMapConfig.name.includes("Frozen") || currentMapConfig.name.includes("Temple") || currentMapConfig.name.includes("Graveyard") || currentMapConfig.name.includes("Alien")) {
+                    ctx.fillStyle = currentMapConfig.particleColor;
+                    ctx.beginPath(); ctx.moveTo(decX, decY); ctx.lineTo(decX-10, decY+30); ctx.lineTo(decX+10, decY+30); ctx.fill(); // Tree/Crystal/Spire
+                } else {
+                    ctx.fillStyle = currentMapConfig.particleColor;
+                    ctx.fillRect(decX, decY, 30, 30); // Generic crate/equipment
+                }
+            }
+            ctx.restore();
+
+            // Render Interactive Objects & NPCs
+            interactiveObjectsRef.current.forEach(obj => {
+                ctx.save();
+                ctx.shadowBlur = cfgHighContrast ? 0 : 10;
+                ctx.fillStyle = obj.type.includes('Chest') ? '#ffaa00' : (obj.type.includes('Fountain') || obj.type.includes('Medic') ? '#ff0055' : '#00f0ff');
+                ctx.shadowColor = ctx.fillStyle;
+
+                if (obj.type.includes('Barrel')) {
+                    ctx.fillStyle = '#ff4400'; ctx.shadowColor = ctx.fillStyle;
+                    ctx.fillRect(obj.x - obj.r - cx, obj.y - obj.r - cy, obj.r*2, obj.r*2);
+                } else if (obj.type.includes('Pad') || obj.type.includes('Zone')) {
+                    ctx.fillStyle = '#00ff66'; ctx.shadowColor = ctx.fillStyle;
+                    ctx.beginPath(); ctx.moveTo(obj.x - cx, obj.y - obj.r - cy); ctx.lineTo(obj.x + obj.r - cx, obj.y + obj.r - cy); ctx.lineTo(obj.x - obj.r - cx, obj.y + obj.r - cy); ctx.fill();
+                } else {
+                    ctx.beginPath(); ctx.arc(obj.x - cx, obj.y - cy, obj.r, 0, Math.PI*2); ctx.fill();
+                }
+
+                ctx.fillStyle = '#000'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                const initial = obj.type.substring(0, 2).toUpperCase();
+                ctx.fillText(initial, obj.x - cx, obj.y - cy);
+                ctx.restore();
+            });
+
+            npcsRef.current.forEach(npc => {
+                ctx.save();
+                ctx.fillStyle = '#00ff66';
+                ctx.shadowBlur = cfgHighContrast ? 0 : 15; ctx.shadowColor = ctx.fillStyle;
+                ctx.beginPath(); ctx.arc(npc.x - cx, npc.y - cy, npc.r, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(npc.x - cx, npc.y - cy, npc.r - 4, 0, Math.PI*2); ctx.fill();
+
+                ctx.fillStyle = '#000'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText("NPC", npc.x - cx, npc.y - cy);
+                ctx.restore();
+            });
+
 
             // Render Modules
             gemsRef.current.forEach(g => { ctx.save(); ctx.fillStyle = g.type === 'heart' ? '#ff0055' : (g.val > 1 ? '#00ffff' : '#00ff66'); ctx.shadowBlur = cfgHighContrast ? 0 : 8; ctx.shadowColor = ctx.fillStyle; ctx.beginPath(); ctx.arc(g.x - cx, g.y - cy, g.type==='heart'?6:3.5, 0, Math.PI*2); ctx.fill(); ctx.restore(); });
@@ -846,6 +1128,29 @@ function CyberpunkSurvival() {
 
             if (upgradesRef.current.shield.lvl > 0) { ctx.save(); ctx.shadowBlur = cfgHighContrast ? 0 : 8; ctx.shadowColor = '#00ff66'; ctx.fillStyle = '#00ff66'; for (let i=0; i<Math.min(4, upgradesRef.current.shield.lvl); i++) { ctx.beginPath(); ctx.arc((p.x + Math.cos(p.shieldAngle + (i*(Math.PI*2/Math.min(4, upgradesRef.current.shield.lvl))))*65) - cx, (p.y + Math.sin(p.shieldAngle + (i*(Math.PI*2/Math.min(4, upgradesRef.current.shield.lvl))))*65) - cy, 5.5, 0, Math.PI*2); ctx.fill(); } ctx.restore(); }
             floatingTextsRef.current.forEach(ft => { ctx.save(); ctx.globalAlpha = ft.alpha; ctx.fillStyle = ft.color; ctx.font = `bold ${Math.floor(13 * (ft.scale ?? 1))}px Courier New`; ctx.textAlign = 'center'; ctx.fillText(ft.text, ft.x - cx, ft.y - cy); ctx.restore(); });
+
+
+            if (mapStateRef.current.showBanner) {
+                ctx.save();
+                let fadeAlpha = 1.0 - Math.abs(mapStateRef.current.bannerTimer - 90) / 90;
+                fadeAlpha = Math.max(0, Math.min(1, fadeAlpha)); // Clamp
+                ctx.fillStyle = `rgba(0, 0, 0, ${fadeAlpha})`;
+                ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, logicalHeight / 2 - 40, logicalWidth, 80);
+                ctx.fillStyle = '#00f0ff';
+                ctx.font = 'bold 32px Courier New';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const textAlpha = Math.min(1, mapStateRef.current.bannerTimer / 30);
+                ctx.globalAlpha = textAlpha;
+                const nextMapIndex = Math.min(MAP_CONFIGS.length - 1, mapStateRef.current.mapIndex + (mapStateRef.current.bannerTimer > 90 ? 1 : 0));
+                ctx.fillText("SECTOR UPDATE: " + MAP_CONFIGS[nextMapIndex].name, logicalWidth / 2, logicalHeight / 2);
+                ctx.restore();
+            }
+
+
             if (cfgFpsCounter) { ctx.save(); ctx.fillStyle = '#00ff66'; ctx.font = '11px monospace'; ctx.fillText(`FPS: ${fpsRef.current.currentFps}`, 20, logicalHeight - 40); ctx.restore(); }
             ctx.restore();
 
