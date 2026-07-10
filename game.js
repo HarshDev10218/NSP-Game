@@ -63,7 +63,7 @@ const MASTER_SHOP_CATALOG = {
         { id: 'shape_chrono_warp', name: 'Chrono Singularity 🌀 [MYTHIC]', cost: 250000, type: 'shapes', shape: 'char', emoji: '🌀', desc: 'Bends localized runtime layout parameters inside the sector.' },
         { id: 'shape_deus_matrix', name: 'Deus Ex Matrix 🤖 [MYTHIC]', cost: 500000, type: 'shapes', shape: 'char', emoji: '🤖', desc: 'Sentient algorithmic framework override matrix.' },
         { id: 'shape_glitch_lord', name: 'Glitch Overlord 👾 [MYTHIC]', cost: 1000000, type: 'shapes', shape: 'char', emoji: '👾', desc: 'Corrupts visual vector buffers to destabilize hostile logic paths.' },
-        
+
         // --- SECRET EXPEDITION COMPLETION ---
         { id: 'shape_developer', name: 'Developer Mode 👨‍💻 [ADMIN]', cost: 0, type: 'shapes', shape: 'char', emoji: '👨‍💻', desc: 'UNLOCKED: Complete all system quests to establish bridge.' }
     ],
@@ -116,7 +116,11 @@ const MASTER_ACHIEVEMENT_REGISTRY = [
     { id: 'ach_surv_10', cat: 'Survival', name: 'GRID SURVIVOR II', desc: 'Endure deployment configuration for a total of 10 minutes.', reward: 1000, target: 600 },
     { id: 'ach_kill_100', cat: 'Combat', name: 'SECTOR CLEANSER I', desc: 'Eliminate 100 system hostiles over your active lifecycle.', reward: 400, target: 100 },
     { id: 'ach_kill_1000', cat: 'Combat', name: 'SECTOR CLEANSER II', desc: 'Eliminate 1,000 system hostiles over your active lifecycle.', reward: 1500, target: 1000 },
-    { id: 'ach_boss_10', cat: 'Boss', name: 'TITAN BREAK I', desc: 'Purge a cumulative counter total of 10 sector gate bosses.', reward: 1200, target: 10 }
+    { id: 'ach_boss_10', cat: 'Boss', name: 'TITAN BREAK I', desc: 'Purge a cumulative counter total of 10 sector gate bosses.', reward: 1200, target: 10 },
+    { id: 'ach_surv_20', cat: 'Survival', name: 'GRID SURVIVOR III', desc: 'Endure deployment configuration for a total of 20 minutes.', reward: 2500, target: 1200 },
+    { id: 'ach_kill_5000', cat: 'Combat', name: 'SECTOR CLEANSER III', desc: 'Eliminate 5,000 system hostiles over your active lifecycle.', reward: 3000, target: 5000 },
+    { id: 'ach_boss_50', cat: 'Boss', name: 'TITAN BREAK II', desc: 'Purge a cumulative counter total of 50 sector gate bosses.', reward: 5000, target: 50 },
+    { id: 'ach_coin_10000', cat: 'Economy', name: 'DATA MINER I', desc: 'Accumulate a total of 10,000 capital credits from all deployments.', reward: 2000, target: 10000 }
 ];
 
 // ==========================================
@@ -217,19 +221,20 @@ function CyberpunkSurvival() {
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
     const [isSignUp, setIsSignUp] = useState(false);
-    
+
     const [activeCoinWallet, setActiveCoinWallet] = useState(0);
     const [unlockedInventory, setUnlockedInventory] = useState(['shape_default', 'ability_default', 'trail_default']);
     const [equippedShape, setEquippedShape] = useState('shape_default');
     const [equippedAbility, setEquippedAbility] = useState('ability_default');
     const [equippedTrail, setEquippedTrail] = useState('trail_default');
     const [activeShopTab, setActiveShopTab] = useState('shapes');
-    
-    const [showShop, setShowShop] = useState(false); 
+
+    const [showShop, setShowShop] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [showStats, setShowStats] = useState(false);
-    const [showQuests, setShowQuests] = useState(false); 
+    const [showQuests, setShowQuests] = useState(false);
     const [showStartLeaderboard, setShowStartLeaderboard] = useState(false);
+    const [showEnemies, setShowEnemies] = useState(false);
 
     const [completedAchievements, setCompletedAchievements] = useState([]);
     const [dailyQuests, setDailyQuests] = useState([
@@ -260,7 +265,7 @@ function CyberpunkSurvival() {
     const [musVolume, setMusVol] = useState(40);
     const [sfxVolume, setSfxVol] = useState(50);
     const [muteActive, setMuteActive] = useState(false);
-    
+
     const isSelectionLocked = useRef(false);
 
     let logicalWidth = 800;
@@ -273,9 +278,9 @@ function CyberpunkSurvival() {
     const keysRef = useRef({});
     const cameraRef = useRef({ x: 0, y: 0 });
     const touchVectorRef = useRef({ x: 0, y: 0 });
-    
+
     const gameMetrics = useRef({ accumTime: 0, clockSeconds: 0, killCounter: 0, bossesKilled: 0, coinsEarnedThisRun: 0, currentCombo: 0, highestComboThisRun: 0, totalPowerupsThisRun: 0, screenShakeIntensity: 0 });
-    const floatingTextsRef = useRef([]); 
+    const floatingTextsRef = useRef([]);
     const fpsRef = useRef({ lastFrameTime: 0, currentFps: 0, frameCount: 0, fpsTimer: 0 });
 
     const lastTimestamp = useRef(0);
@@ -304,14 +309,14 @@ function CyberpunkSurvival() {
                 if (data.equipped_ability) setEquippedAbility(data.equipped_ability);
                 if (data.equipped_trail) setEquippedTrail(data.equipped_trail);
                 if (data.completed_achievements) setCompletedAchievements(data.completed_achievements);
-                
+
                 if (data.settings) {
                     setMVol(data.settings.master_vol ?? 50); setMusVol(data.settings.music_vol ?? 40); setSfxVol(data.settings.sfx_vol ?? 50);
                     setCfgScreenShake(data.settings.screen_shake ?? true); setCfgParticles(data.settings.particles ?? true);
                     setCfgFpsCounter(data.settings.fps_counter ?? false); setCfgHighContrast(data.settings.high_contrast ?? false);
                 }
                 if (data.lifetime_stats) setLifetimeStats(data.lifetime_stats);
-                
+
                 if (data.daily_quests_state) {
                     const todayStr = new Date().toDateString();
                     if (data.daily_quests_state.last_reset_date !== todayStr) {
@@ -337,7 +342,7 @@ function CyberpunkSurvival() {
             .then(({ data: authData, error: authErr }) => {
                 if (authErr) throw authErr;
                 if (authData.user) {
-                    return cyberbase.from('profiles').insert([{ 
+                    return cyberbase.from('profiles').insert([{
                         id: authData.user.id, username: username.toUpperCase().trim(), coins: 0,
                         inventory: ['shape_default', 'ability_default', 'trail_default'],
                         equipped_shape: 'shape_default', equipped_ability: 'ability_default', equipped_trail: 'trail_default',
@@ -369,7 +374,7 @@ function CyberpunkSurvival() {
     function handleShopTransaction(item) {
         if (!user) return; AudioEngine.playSFX('click');
         const isOwned = unlockedInventory.includes(item.id);
-        
+
         if (isOwned) {
             let updatePayload = {};
             if (item.type === 'shapes') { setEquippedShape(item.id); updatePayload.equipped_shape = item.id; }
@@ -380,21 +385,21 @@ function CyberpunkSurvival() {
             if (item.id === 'shape_developer') {
                 const totalActiveQuestsCount = dailyQuests.length;
                 const completedQuestsCount = dailyQuests.filter(q => q.progress >= q.target).length;
-                
+
                 if (completedQuestsCount < totalActiveQuestsCount) {
                     alert("ACCESS OVERRIDE FAILURE: Developer Hull requires ALL ongoing Daily Missions to be completed!");
                     return;
                 }
-            } else if (activeCoinWallet < item.cost) { 
-                alert("INSUFFICIENT CAPITAL CREDITS IN COIN RESERVES."); 
-                return; 
+            } else if (activeCoinWallet < item.cost) {
+                alert("INSUFFICIENT CAPITAL CREDITS IN COIN RESERVES.");
+                return;
             }
-            
+
             const directWalletResult = item.id === 'shape_developer' ? activeCoinWallet : activeCoinWallet - item.cost;
             const updatedInventoryList = [...unlockedInventory, item.id];
             const updatedStatsObj = { ...lifetimeStats, coins_spent: (lifetimeStats.coins_spent ?? 0) + (item.id === 'shape_developer' ? 0 : item.cost) };
             setDbLoading(true);
-            
+
             cyberbase.from('profiles').update({ coins: directWalletResult, inventory: updatedInventoryList, lifetime_stats: updatedStatsObj }).eq('id', user.id)
             .then(({ error }) => {
                 if (!error) { setActiveCoinWallet(directWalletResult); setUnlockedInventory(updatedInventoryList); setLifetimeStats(updatedStatsObj); }
@@ -456,9 +461,13 @@ function CyberpunkSurvival() {
                 if (ach.id === 'ach_first_boss' && m.bossesKilled >= 1) checkConditionPassed = true;
                 if (ach.id === 'ach_surv_5' && updatedSurvivalSecs >= 300) checkConditionPassed = true;
                 if (ach.id === 'ach_surv_10' && updatedSurvivalSecs >= 600) checkConditionPassed = true;
+                if (ach.id === 'ach_surv_20' && updatedSurvivalSecs >= 1200) checkConditionPassed = true;
                 if (ach.id === 'ach_kill_100' && updatedKillsTotal >= 100) checkConditionPassed = true;
                 if (ach.id === 'ach_kill_1000' && updatedKillsTotal >= 1000) checkConditionPassed = true;
+                if (ach.id === 'ach_kill_5000' && updatedKillsTotal >= 5000) checkConditionPassed = true;
                 if (ach.id === 'ach_boss_10' && updatedBossesTotal >= 10) checkConditionPassed = true;
+                if (ach.id === 'ach_boss_50' && updatedBossesTotal >= 50) checkConditionPassed = true;
+                if (ach.id === 'ach_coin_10000' && (lifetimeStats.total_coins_earned ?? 0) + m.coinsEarnedThisRun + operationalBonusAwardedCoins >= 10000) checkConditionPassed = true;
                 if (checkConditionPassed) { unlockedIdsThisSession.push(ach.id); operationalBonusAwardedCoins += ach.reward; }
             });
 
@@ -494,13 +503,15 @@ function CyberpunkSurvival() {
 
     function startSimulation() {
         const p = playerRef.current;
-        p.x = 400; p.y = 300; p.health = 100; p.level = 1; p.xp = 0; p.xpNeeded = 12; p.speedMult = 1; p.laserCooldown = 180; p.pickupRadius = p.basePickupRadius; p.flashTime = 0;
+        p.maxHealth = 100;
+        if (equippedAbility === 'ability_extra_health') p.maxHealth += 10;
+        p.x = 400; p.y = 300; p.health = p.maxHealth; p.level = 1; p.xp = 0; p.xpNeeded = 12; p.speedMult = 1; p.laserCooldown = 180; p.pickupRadius = p.basePickupRadius * (equippedAbility === 'ability_coin_magnet' ? 1.2 : 1.0); p.flashTime = 0;
         enemiesRef.current = []; projectilesRef.current = []; gemsRef.current = []; particlesRef.current = []; floatingTextsRef.current = [];
         gameMetrics.current = { accumTime: 0, clockSeconds: 0, killCounter: 0, bossesKilled: 0, coinsEarnedThisRun: 0, currentCombo: 0, highestComboThisRun: 0, totalPowerupsThisRun: 0, screenShakeIntensity: 0 };
         touchVectorRef.current = { x: 0, y: 0 }; bossSpawnedForCurrentMilestone.current = false; lastTimestamp.current = performance.now();
         setScoreSubmitted(false); setShowStartLeaderboard(false); isSelectionLocked.current = false; setFinalUpgradesManifest([]);
         Object.keys(upgradesRef.current).forEach(k => upgradesRef.current[k].lvl = 0); setBossHp({ current: 0, max: 250, active: false });
-        setHud({ health: 100, level: 1, xp: 0, xpNeeded: 12, kills: 0, time: "00:00", coins: activeCoinWallet, combo: 0 });
+        setHud({ health: p.maxHealth, maxHealth: p.maxHealth, level: 1, xp: 0, xpNeeded: 12, kills: 0, time: "00:00", coins: activeCoinWallet, combo: 0 });
         setGameState('PLAY');
     }
 
@@ -548,7 +559,7 @@ function CyberpunkSurvival() {
     useEffect(() => {
         const handleGlobalPauseKeyListener = (e) => {
             if (e.key === 'Escape' || e.key.toLowerCase() === 'p') {
-                if (gameState === 'PLAY') { AudioEngine.playSFX('click'); setGameState('PAUSED'); } 
+                if (gameState === 'PLAY') { AudioEngine.playSFX('click'); setGameState('PAUSED'); }
                 else if (gameState === 'PAUSED') { AudioEngine.playSFX('click'); setGameState('PLAY'); }
             }
         };
@@ -582,7 +593,7 @@ function CyberpunkSurvival() {
             fpsRef.current.frameCount++; fpsRef.current.fpsTimer += dt;
             if (fpsRef.current.fpsTimer >= 1000) { fpsRef.current.currentFps = fpsRef.current.frameCount; fpsRef.current.frameCount = 0; fpsRef.current.fpsTimer -= 1000; }
 
-            const p = playerRef.current; 
+            const p = playerRef.current;
             if (p.health <= 0) { setGameState('GAME_OVER'); compileFinalUpgradesReport(); return; }
 
             const bossActive = enemiesRef.current.some(e => e.type === 'boss');
@@ -590,12 +601,12 @@ function CyberpunkSurvival() {
             if (gameState === 'PLAY') {
                 const metrics = gameMetrics.current;
                 const activeTrailMods = TRAIL_MODIFIERS[equippedTrail] || { speed: 1.0, coin: 1.0 };
-                const hasBlazeAbility = equippedAbility === 'ability_fire';
-                const hasFrostAbility = equippedAbility === 'ability_ice';
-                const hasLuckAbility = equippedAbility === 'ability_luck';
+                const hasBlazeAbility = false;
+                const hasFrostAbility = false;
+                const hasLuckAbility = equippedAbility === 'ability_lucky_drop';
 
                 const comboSpeedBuff = Math.min(1.3, 1 + (metrics.currentCombo * 0.01));
-                p.speedMult = activeTrailMods.speed * comboSpeedBuff;
+                p.speedMult = activeTrailMods.speed * comboSpeedBuff * (equippedAbility === 'ability_speed_boost' ? 1.05 : 1.0);
                 if (p.flashTime > 0) p.flashTime -= frameRatio;
                 if (metrics.screenShakeIntensity > 0) metrics.screenShakeIntensity -= 0.4 * frameRatio;
 
@@ -646,7 +657,7 @@ function CyberpunkSurvival() {
                             projectilesRef.current.push({ x: p.x, y: p.y, vx: Math.cos(angle - 0.25) * projectileVelocitySpeed, vy: Math.sin(angle - 0.25) * projectileVelocitySpeed, radius: 4, laser: false, dead: false });
                             projectilesRef.current.push({ x: p.x, y: p.y, vx: Math.cos(angle + 0.25) * projectileVelocitySpeed, vy: Math.sin(angle + 0.25) * projectileVelocitySpeed, radius: 4, laser: false, dead: false });
                         } else { projectilesRef.current.push({ x: p.x, y: p.y, vx: Math.cos(angle) * projectileVelocitySpeed, vy: Math.sin(angle) * projectileVelocitySpeed, radius: 5, laser: false, dead: false }); }
-                        p.fireCooldown = Math.max(5, p.baseFireRate * (1 - Math.min(0.75, attackLvl * 0.20)));
+                        p.fireCooldown = Math.max(5, (p.baseFireRate * (equippedAbility === 'ability_rapid_fire' ? 0.95 : 1.0)) * (1 - Math.min(0.75, attackLvl * 0.20)));
                     }
                 }
 
@@ -676,7 +687,7 @@ function CyberpunkSurvival() {
                     if (!bossSpawnedForCurrentMilestone.current && !bossActive) {
                         const bMaxHp = Math.floor(250 * (1 + metrics.bossesKilled * 0.75)); enemiesRef.current.push({ x: p.x, y: p.y - 400, type: 'boss', hp: bMaxHp, maxHp: bMaxHp, speed: 0.8, r: 42, color: '#9900ff', shape: 'oct', dead: false, bossActionTimer: 120, state: 'normal', dashVx: 0, dashVy: 0, freezeFactor: 1.0, flashTime: 0 });
                         bossSpawnedForCurrentMilestone.current = true; AudioEngine.playSFX('boss_spawn'); setBossHp({ current: bMaxHp, max: bMaxHp, active: true });
-                        if (cfgScreenShake) metrics.screenShakeIntensity = 15; 
+                        if (cfgScreenShake) metrics.screenShakeIntensity = 15;
                     }
                 } else { bossSpawnedForCurrentMilestone.current = false; }
 
@@ -700,7 +711,7 @@ function CyberpunkSurvival() {
                                 e.timer -= frameRatio; e.x += Math.cos(angle) * 0.5 * trueCalculatedSpeed; e.y += Math.sin(angle) * 0.5 * trueCalculatedSpeed;
                                 if (e.timer <= 0) {
                                     e.hp = -10; AudioEngine.playSFX('explosion');
-                                    if (distToPlayer < 75) { 
+                                    if (distToPlayer < 75) {
                                         p.health = Math.max(0, p.health - 22); p.flashTime = 5; AudioEngine.playSFX('damage');
                                         if (cfgScreenShake) metrics.screenShakeIntensity = 8;
                                     }
@@ -737,7 +748,7 @@ function CyberpunkSurvival() {
                                 if (cfgScreenShake) metrics.screenShakeIntensity = 8;
                             }
                         } else {
-                            for (let e of enemiesRef.current) { if (Math.hypot(proj.x - e.x, proj.y - e.y) < proj.radius + e.r) { proj.dead = true; e.hp -= 1; e.flashTime = 3; if (hasFrostAbility) e.freezeFactor = 0.5; floatingTextsRef.current.push({ x: e.x, y: e.y - 10, text: "1", color: '#00f0ff', alpha: 1, scale: 0.9 }); AudioEngine.playSFX('hit'); break; } }
+                            for (let e of enemiesRef.current) { if (Math.hypot(proj.x - e.x, proj.y - e.y) < proj.radius + e.r) { proj.dead = true; const dmg = equippedAbility === 'ability_bullet_power' ? 1.05 : 1; e.hp -= dmg; e.flashTime = 3; if (hasFrostAbility) e.freezeFactor = 0.5; floatingTextsRef.current.push({ x: e.x, y: e.y - 10, text: dmg.toString(), color: '#00f0ff', alpha: 1, scale: 0.9 }); AudioEngine.playSFX('hit'); break; } }
                         }
                         if (Math.hypot(proj.x - p.x, proj.y - p.y) > 900) proj.dead = true;
                     }
@@ -749,7 +760,7 @@ function CyberpunkSurvival() {
                         g.attracted = true; g.speed += 0.4 * frameRatio; g.x += Math.cos(Math.atan2(p.y - g.y, p.x - g.x)) * g.speed * frameRatio; g.y += Math.sin(Math.atan2(p.y - g.y, p.x - g.x)) * g.speed * frameRatio;
                         if (d < p.radius + 4) {
                             g.dead = true; AudioEngine.playSFX('powerup'); metrics.totalPowerupsThisRun++;
-                            if (g.type === 'heart') { p.health = Math.min(100, p.health + 24); floatingTextsRef.current.push({ x: p.x, y: p.y - 20, text: "+25 HP", color: '#ff0055', alpha: 1, scale: 1.1 }); setHud(prev => ({ ...prev, health: p.health })); } else {
+                            if (g.type === 'heart') { p.health = Math.min(p.maxHealth, p.health + 24); floatingTextsRef.current.push({ x: p.x, y: p.y - 20, text: "+25 HP", color: '#ff0055', alpha: 1, scale: 1.1 }); setHud(prev => ({ ...prev, health: p.health })); } else {
                                 const computationalXPMult = hasLuckAbility ? 2 : 1; p.xp = Math.min(p.xpNeeded, p.xp + (g.val * computationalXPMult));
                                 if (p.xp >= p.xpNeeded) { p.xp -= p.xpNeeded; p.level++; p.xpNeeded = Math.floor(p.xpNeeded * 1.45) + 8; setGameState('LEVEL_UP'); setCards(Object.keys(upgradesRef.current).map(k => upgradesRef.current[k]).filter(u => u.id !== 'magnet' || u.lvl < 6).sort(() => Math.random() - 0.5).slice(0, 3)); }
                                 setHud(prev => ({ ...prev, level: p.level, xp: p.xp, xpNeeded: p.xpNeeded }));
@@ -809,26 +820,26 @@ function CyberpunkSurvival() {
 
             if (activeProfileConfig.shape === 'char') {
                 // High Tier Anomalous Skins: Renders Explicit String Fonts (Emojis)
-                ctx.font = '36px sans-serif'; 
+                ctx.font = '36px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = '#ffffff';
-                ctx.fillText(activeProfileConfig.emoji || '📐', 0, 0); 
+                ctx.fillText(activeProfileConfig.emoji || '📐', 0, 0);
             } else {
                 // Baseline Geometric Hulls: Renders Glowing Path Vectors
                 ctx.shadowBlur = cfgHighContrast ? 0 : 14; ctx.shadowColor = activeProfileConfig.color; ctx.strokeStyle = activeProfileConfig.color; ctx.fillStyle = p.flashTime > 0 ? '#ffffff' : '#030307'; ctx.lineWidth = 3;
-                ctx.beginPath(); 
-                if (activeProfileConfig.shape === 'sq') { 
-                    ctx.rect(-12, -12, 24, 24); 
-                } else if (activeProfileConfig.shape === 'pent') { 
-                    for (let i = 0; i < 5; i++) { ctx.lineTo(15 * Math.cos((Math.PI*2/5)*i), 15 * Math.sin((Math.PI*2/5)*i)); } 
+                ctx.beginPath();
+                if (activeProfileConfig.shape === 'sq') {
+                    ctx.rect(-12, -12, 24, 24);
+                } else if (activeProfileConfig.shape === 'pent') {
+                    for (let i = 0; i < 5; i++) { ctx.lineTo(15 * Math.cos((Math.PI*2/5)*i), 15 * Math.sin((Math.PI*2/5)*i)); }
                 } else if (activeProfileConfig.shape === 'hex') {
                     for (let i = 0; i < 6; i++) { ctx.lineTo(15 * Math.cos((Math.PI*2/6)*i), 15 * Math.sin((Math.PI*2/6)*i)); }
-                } else if (activeProfileConfig.shape === 'oct') { 
-                    for (let i = 0; i < 8; i++) { ctx.lineTo(16 * Math.cos((Math.PI*2/8)*i), 16 * Math.sin((Math.PI*2/8)*i)); } 
-                } else { 
-                    ctx.moveTo(16, 0); ctx.lineTo(-12, -13); ctx.lineTo(-6, 0); ctx.lineTo(-12, 13); 
-                } 
+                } else if (activeProfileConfig.shape === 'oct') {
+                    for (let i = 0; i < 8; i++) { ctx.lineTo(16 * Math.cos((Math.PI*2/8)*i), 16 * Math.sin((Math.PI*2/8)*i)); }
+                } else {
+                    ctx.moveTo(16, 0); ctx.lineTo(-12, -13); ctx.lineTo(-6, 0); ctx.lineTo(-12, 13);
+                }
                 ctx.closePath(); ctx.fill(); ctx.stroke();
             }
             ctx.restore();
@@ -836,7 +847,7 @@ function CyberpunkSurvival() {
             if (upgradesRef.current.shield.lvl > 0) { ctx.save(); ctx.shadowBlur = cfgHighContrast ? 0 : 8; ctx.shadowColor = '#00ff66'; ctx.fillStyle = '#00ff66'; for (let i=0; i<Math.min(4, upgradesRef.current.shield.lvl); i++) { ctx.beginPath(); ctx.arc((p.x + Math.cos(p.shieldAngle + (i*(Math.PI*2/Math.min(4, upgradesRef.current.shield.lvl))))*65) - cx, (p.y + Math.sin(p.shieldAngle + (i*(Math.PI*2/Math.min(4, upgradesRef.current.shield.lvl))))*65) - cy, 5.5, 0, Math.PI*2); ctx.fill(); } ctx.restore(); }
             floatingTextsRef.current.forEach(ft => { ctx.save(); ctx.globalAlpha = ft.alpha; ctx.fillStyle = ft.color; ctx.font = `bold ${Math.floor(13 * (ft.scale ?? 1))}px Courier New`; ctx.textAlign = 'center'; ctx.fillText(ft.text, ft.x - cx, ft.y - cy); ctx.restore(); });
             if (cfgFpsCounter) { ctx.save(); ctx.fillStyle = '#00ff66'; ctx.font = '11px monospace'; ctx.fillText(`FPS: ${fpsRef.current.currentFps}`, 20, logicalHeight - 40); ctx.restore(); }
-            ctx.restore(); 
+            ctx.restore();
 
             if (gameState === 'PLAY') cancelEngineId.current = requestAnimationFrame(runEngineStep);
         };
@@ -973,6 +984,32 @@ function CyberpunkSurvival() {
         );
     }
 
+    function renderEnemiesDashboard() {
+        const enemiesInfo = [
+            { name: "Drone", desc: "Basic grid anomaly. Swarms target but lacks heavy armor.", color: "#ff0055" },
+            { name: "Breacher", desc: "High-speed kamikaze unit. Detonates upon perimeter breach.", color: "#ffaa00" },
+            { name: "Hound", desc: "Fast tracking logic unit. Evades standard vectors.", color: "#ff00aa" },
+            { name: "Sniper", desc: "Long-range precision module. Fires projectiles from afar.", color: "#00ff66" },
+            { name: "Goliath", desc: "Heavy armored logic node. Very slow but high integrity.", color: "#00f0ff" },
+            { name: "Megamech Anchor", desc: "Sector gate boss. Features multi-phase tactical logic.", color: "#9900ff" }
+        ];
+
+        return React.createElement("div", { className: "screen-overlay" },
+            React.createElement("div", { className: "neon-title title-red" }, "HOSTILE INTEL DIRECTORY"),
+            React.createElement("div", { className: "quest-dashboard-wrapper", style: { overflowY: 'auto' } },
+                enemiesInfo.map((en, idx) =>
+                    React.createElement("div", { key: idx, className: "progression-card-strip", style: { borderColor: en.color, background: 'rgba(0,0,0,0.5)' } },
+                        React.createElement("div", { className: "progression-meta-zone" },
+                            React.createElement("span", { className: "progression-item-title", style: { color: en.color, fontSize: '14px' } }, `>> ${en.name}`),
+                            React.createElement("span", { className: "progression-item-desc", style: { fontSize: '12px' } }, en.desc)
+                        )
+                    )
+                )
+            ),
+            React.createElement("button", { className: "neon-btn", style: { marginTop: '20px', borderColor: '#00f0ff', color: '#00f0ff' }, onClick: () => { AudioEngine.playSFX('click'); setShowEnemies(false); } }, "RETURN TO TERMINAL")
+        );
+    }
+
     function renderStartScreenView() {
         const unifiedGlobalFooterElement = React.createElement("div", { className: "cyber-footer" }, "NEON SURVIVAL PROTOCOL v1.3.1 // PROGRESSION NETWORK CORE // INTEL ARCH");
         if (showStartLeaderboard) { return React.createElement("div", { className: "screen-overlay" }, React.createElement("div", { className: "neon-title title-blue" }, "NEON SURVIVAL PROTOCOL"), renderLeaderboardStructure(), React.createElement("button", { className: "neon-btn", style: { marginTop: '20px' }, onClick: toggleStartLeaderboardMode }, "BACK TO UPLINK"), unifiedGlobalFooterElement); }
@@ -980,6 +1017,7 @@ function CyberpunkSurvival() {
         if (user && showSettings) return renderConfigurationDashboard();
         if (user && showStats) return renderLifetimeStatisticsDashboard();
         if (user && showQuests) return renderQuestsAndAchievementsDashboard();
+        if (user && showEnemies) return renderEnemiesDashboard();
 
         let dynamicControlZone = !user ? renderAuthFormStructure() : React.createElement("div", { key: "welcome-box", style: { textAlign: 'center', width: '100%' } },
             React.createElement("div", { className: "summary-text", style: { color: '#00ff66', fontWeight: 'bold' } }, `CONNECTED AGENT: [${username}]`),
@@ -988,6 +1026,7 @@ function CyberpunkSurvival() {
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px' }, onClick: initializeGameSession }, "LAUNCH SIMULATION CORE"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#ffaa00', color: '#ffaa00' }, onClick: () => { AudioEngine.playSFX('click'); setShowShop(true); } }, "OPEN UPGRADE STORE"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#ff5500', color: '#ff5500' }, onClick: () => { AudioEngine.playSFX('click'); setShowQuests(true); } }, "MISSIONS & ACHIEVEMENTS"),
+                React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#ff00aa', color: '#ff00aa' }, onClick: () => { AudioEngine.playSFX('click'); setShowEnemies(true); } }, "HOSTILE INTEL DIRECTORY"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#00ff66', color: '#00ff66' }, onClick: () => { AudioEngine.playSFX('click'); setShowStats(true); fetchLeaderboardScores(); } }, "LIFETIME DATA CORE"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#888', color: '#888' }, onClick: () => { AudioEngine.playSFX('click'); setShowSettings(true); } }, "HARDWARE SETTINGS"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#ff0055', color: '#ff0055' }, onClick: handleSignOut }, "TERMINATE CONNECTION")
@@ -1045,13 +1084,18 @@ function CyberpunkSurvival() {
     // ==========================================
     return React.createElement("div", { id: "game-container" },
         React.createElement("canvas", { ref: canvasRef }),
-        gameState === 'PLAY' ? React.createElement("button", { className: "hud-interactive-trigger", onClick: () => { AudioEngine.playSFX('click'); setGameState('PAUSED'); } }, "PAUSE MATRIX") : null,
         gameState === 'PLAY' ? React.createElement("div", { className: "mobile-input-layer", onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd }, React.createElement("div", { className: "joystick-base" }, React.createElement("div", { ref: knobRef, className: "joystick-knob" }))) : null,
         gameState === 'PLAY' ? React.createElement("div", { className: "hud-overlay" },
+            React.createElement("div", { className: "top-hud-container" },
+                React.createElement("div", { className: "stats-panel time-left" }, "TIME: ", hud.time),
+                React.createElement("button", { className: "hud-interactive-trigger", onClick: () => { AudioEngine.playSFX('click'); setGameState('PAUSED'); } }, "PAUSE MATRIX"),
+                React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "flex-end" } },
+                    React.createElement("div", { className: "stats-panel kill-count" }, "COINS: ", hud.coins),
+                    hud.combo > 1 ? React.createElement("div", { className: "combo-banner-readout" }, `${hud.combo}x COMBO!`) : null
+                )
+            ),
             React.createElement("div", { className: "xp-container" }, React.createElement("div", { className: "xp-bar", style: { width: `${Math.min(100, (hud.xp / hud.xpNeeded) * 100)}%` } })),
-            React.createElement("div", { className: "stats-panel time-left" }, "TIME: ", hud.time), React.createElement("div", { className: "stats-panel kill-count" }, "COINS: ", hud.coins),
-            hud.combo > 1 ? React.createElement("div", { className: "combo-banner-readout" }, `${hud.combo}x COMBO!`) : null,
-            React.createElement("div", { className: "hp-container" }, React.createElement("div", { className: "hp-bar", style: { width: `${Math.max(0, Math.min(100, hud.health))}%` } })),
+            React.createElement("div", { className: "hp-container" }, React.createElement("div", { className: "hp-bar", style: { width: `${Math.max(0, Math.min(100, (hud.health / (hud.maxHealth || 100)) * 100))}%` } })),
             bossHp.active ? React.createElement("div", { className: "boss-container" }, React.createElement("div", { className: "boss-bar", style: { width: `${Math.max(0, Math.min(100, (bossHp.current / bossHp.max) * 100))}%` } })) : null
         ) : null,
         gameState === 'START_SCREEN' ? renderStartScreenView() : null,
