@@ -266,6 +266,7 @@ function CyberpunkSurvival() {
     const [showQuests, setShowQuests] = useState(false);
     const [showStartLeaderboard, setShowStartLeaderboard] = useState(false);
     const [showEnemies, setShowEnemies] = useState(false);
+    const [showMaps, setShowMaps] = useState(false);
 
     const [completedAchievements, setCompletedAchievements] = useState([]);
     const [dailyQuests, setDailyQuests] = useState([
@@ -1007,6 +1008,12 @@ function CyberpunkSurvival() {
                 enemiesRef.current = enemiesRef.current.filter(e => !e.dead); projectilesRef.current = projectilesRef.current.filter(p => !p.dead); gemsRef.current = gemsRef.current.filter(g => !g.dead);
                 particlesRef.current.forEach(pt => { pt.x += pt.vx * frameRatio; pt.y += pt.vy * frameRatio; pt.alpha -= 0.025 * frameRatio; }); particlesRef.current = particlesRef.current.filter(pt => pt.alpha > 0);
                 floatingTextsRef.current.forEach(ft => { ft.y -= 1.2 * frameRatio; ft.alpha -= 0.03 * frameRatio; }); floatingTextsRef.current = floatingTextsRef.current.filter(ft => ft.alpha > 0);
+
+                setHud(prev => prev.health === p.health ? prev : ({ ...prev, health: p.health }));
+                const activeBoss = enemiesRef.current.find(e => e.type === 'boss');
+                if (activeBoss) {
+                    setBossHp(prev => prev.current === activeBoss.hp ? prev : ({ ...prev, current: activeBoss.hp }));
+                }
             }
 
             // --- CANVAS RENDERING (HYBRID HARDENED STRUCT DESIGN) ---
@@ -1180,6 +1187,23 @@ function CyberpunkSurvival() {
         );
     }
 
+    function renderMapsDashboard() {
+        return React.createElement("div", { className: "screen-overlay" },
+            React.createElement("div", { className: "neon-title title-blue" }, "SECTOR MAP DIRECTORY"),
+            React.createElement("div", { className: "quest-dashboard-wrapper", style: { overflowY: 'auto' } },
+                MAP_CONFIGS.map((mapInfo, idx) =>
+                    React.createElement("div", { key: idx, className: "progression-card-strip", style: { borderColor: mapInfo.particleColor, background: 'rgba(0,0,0,0.5)' } },
+                        React.createElement("div", { className: "progression-meta-zone" },
+                            React.createElement("span", { className: "progression-item-title", style: { color: mapInfo.particleColor, fontSize: '14px' } }, `>> ${mapInfo.name}`),
+                            React.createElement("span", { className: "progression-item-desc", style: { fontSize: '12px' } }, mapInfo.theme)
+                        )
+                    )
+                )
+            ),
+            React.createElement("button", { className: "neon-btn", style: { marginTop: '20px', borderColor: '#00f0ff', color: '#00f0ff' }, onClick: () => { AudioEngine.playSFX('click'); setShowMaps(false); } }, "RETURN TO TERMINAL")
+        );
+    }
+
     function renderAudioSettingsMenu() {
         return React.createElement("div", { key: "audio-panel", className: "audio-settings-panel" },
             React.createElement("div", { className: "volume-row" }, React.createElement("span", null, "MASTER VOLUME CORE:"), React.createElement("input", { type: "range", className: "volume-slider", min: "0", max: "100", value: mVolume, onChange: (e) => setMVol(Number(e.target.value)) })),
@@ -1323,6 +1347,7 @@ function CyberpunkSurvival() {
         if (user && showStats) return renderLifetimeStatisticsDashboard();
         if (user && showQuests) return renderQuestsAndAchievementsDashboard();
         if (user && showEnemies) return renderEnemiesDashboard();
+        if (user && showMaps) return renderMapsDashboard();
 
         let dynamicControlZone = !user ? renderAuthFormStructure() : React.createElement("div", { key: "welcome-box", style: { textAlign: 'center', width: '100%' } },
             React.createElement("div", { className: "summary-text", style: { color: '#00ff66', fontWeight: 'bold' } }, `CONNECTED AGENT: [${username}]`),
@@ -1332,6 +1357,7 @@ function CyberpunkSurvival() {
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#ffaa00', color: '#ffaa00' }, onClick: () => { AudioEngine.playSFX('click'); setShowShop(true); } }, "OPEN UPGRADE STORE"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#ff5500', color: '#ff5500' }, onClick: () => { AudioEngine.playSFX('click'); setShowQuests(true); } }, "MISSIONS & ACHIEVEMENTS"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#ff00aa', color: '#ff00aa' }, onClick: () => { AudioEngine.playSFX('click'); setShowEnemies(true); } }, "HOSTILE INTEL DIRECTORY"),
+                React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#00f0ff', color: '#00f0ff' }, onClick: () => { AudioEngine.playSFX('click'); setShowMaps(true); } }, "SECTOR MAP DIRECTORY"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#00ff66', color: '#00ff66' }, onClick: () => { AudioEngine.playSFX('click'); setShowStats(true); fetchLeaderboardScores(); } }, "LIFETIME DATA CORE"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#888', color: '#888' }, onClick: () => { AudioEngine.playSFX('click'); setShowSettings(true); } }, "HARDWARE SETTINGS"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#ff0055', color: '#ff0055' }, onClick: handleSignOut }, "TERMINATE CONNECTION")
