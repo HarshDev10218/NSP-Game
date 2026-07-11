@@ -209,21 +209,21 @@ const AudioEngine = {
 // 🗺️ MAP CONFIGURATIONS & PROGRESSION
 // ==========================================
 const MAP_CONFIGS = [
-    { name: "Neon City", theme: "Blue and purple cyberpunk city", gridColor: "#121226", particleColor: "#00f0ff", friction: 1.0, enemySpeedMod: 1.0 },
-    { name: "Desert Outpost", theme: "Sand dunes", gridColor: "#332211", particleColor: "#ffcc00", friction: 0.95, enemySpeedMod: 1.1 },
-    { name: "Frozen Wasteland", theme: "Snowstorm", gridColor: "#112233", particleColor: "#ffffff", friction: 0.8, enemySpeedMod: 1.2 },
-    { name: "Toxic Laboratory", theme: "Underground facility", gridColor: "#113311", particleColor: "#00ff00", friction: 1.0, enemySpeedMod: 1.0 },
-    { name: "Cyber Factory", theme: "Giant factory", gridColor: "#222222", particleColor: "#aaaaaa", friction: 1.0, enemySpeedMod: 1.0 },
-    { name: "Ancient Temple", theme: "Lost ruins", gridColor: "#2a3b2a", particleColor: "#88cc88", friction: 1.0, enemySpeedMod: 1.0 },
-    { name: "Haunted Graveyard", theme: "Night fog", gridColor: "#1a1a2e", particleColor: "#555577", friction: 1.0, enemySpeedMod: 1.0 },
-    { name: "Volcano Core", theme: "Lava world", gridColor: "#3b1111", particleColor: "#ff4400", friction: 1.0, enemySpeedMod: 1.1 },
-    { name: "Sky Islands", theme: "Floating islands", gridColor: "#113355", particleColor: "#aaddff", friction: 1.0, enemySpeedMod: 1.0 },
-    { name: "Underwater Base", theme: "Ocean research", gridColor: "#0a1a3a", particleColor: "#00aaff", friction: 1.2, enemySpeedMod: 0.9 },
-    { name: "Space Station", theme: "Orbiting station", gridColor: "#050510", particleColor: "#ffffff", friction: 1.0, enemySpeedMod: 1.0 },
-    { name: "Alien Planet", theme: "Purple landscape", gridColor: "#220033", particleColor: "#aa00ff", friction: 1.0, enemySpeedMod: 1.0 },
-    { name: "Crystal Caverns", theme: "Underground crystal cave", gridColor: "#111133", particleColor: "#00ffff", friction: 1.0, enemySpeedMod: 1.0 },
-    { name: "Dark Dimension", theme: "Shadow world", gridColor: "#0d001a", particleColor: "#330066", friction: 1.0, enemySpeedMod: 1.0 },
-    { name: "Final Nexus", theme: "Ultimate futuristic arena", gridColor: "#330033", particleColor: "#ff00ff", friction: 1.0, enemySpeedMod: 1.2 }
+    { name: "Neon City", theme: "Blue and purple cyberpunk city", gridColor: "#121226", bgTop: "#080811", bgBottom: "#1a0b2e", particleColor: "#00f0ff", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Desert Outpost", theme: "Sand dunes", gridColor: "#332211", bgTop: "#ffaa00", bgBottom: "#552200", particleColor: "#ffcc00", friction: 0.95, enemySpeedMod: 1.1 },
+    { name: "Frozen Wasteland", theme: "Snowstorm", gridColor: "#112233", bgTop: "#aaddff", bgBottom: "#112233", particleColor: "#ffffff", friction: 0.8, enemySpeedMod: 1.2 },
+    { name: "Toxic Laboratory", theme: "Underground facility", gridColor: "#113311", bgTop: "#002200", bgBottom: "#113311", particleColor: "#00ff00", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Cyber Factory", theme: "Giant factory", gridColor: "#222222", bgTop: "#111111", bgBottom: "#333333", particleColor: "#aaaaaa", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Ancient Temple", theme: "Lost ruins", gridColor: "#2a3b2a", bgTop: "#112211", bgBottom: "#2a3b2a", particleColor: "#88cc88", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Haunted Graveyard", theme: "Night fog", gridColor: "#1a1a2e", bgTop: "#0a0a1a", bgBottom: "#1a1a2e", particleColor: "#555577", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Volcano Core", theme: "Lava world", gridColor: "#3b1111", bgTop: "#550000", bgBottom: "#ff4400", particleColor: "#ff4400", friction: 1.0, enemySpeedMod: 1.1 },
+    { name: "Sky Islands", theme: "Floating islands", gridColor: "#113355", bgTop: "#0055aa", bgBottom: "#aaddff", particleColor: "#aaddff", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Underwater Base", theme: "Ocean research", gridColor: "#0a1a3a", bgTop: "#001133", bgBottom: "#0a1a3a", particleColor: "#00aaff", friction: 1.2, enemySpeedMod: 0.9 },
+    { name: "Space Station", theme: "Orbiting station", gridColor: "#050510", bgTop: "#000000", bgBottom: "#050510", particleColor: "#ffffff", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Alien Planet", theme: "Purple landscape", gridColor: "#220033", bgTop: "#110022", bgBottom: "#440066", particleColor: "#aa00ff", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Crystal Caverns", theme: "Underground crystal cave", gridColor: "#111133", bgTop: "#001122", bgBottom: "#111133", particleColor: "#00ffff", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Dark Dimension", theme: "Shadow world", gridColor: "#0d001a", bgTop: "#000000", bgBottom: "#0d001a", particleColor: "#330066", friction: 1.0, enemySpeedMod: 1.0 },
+    { name: "Final Nexus", theme: "Ultimate futuristic arena", gridColor: "#330033", bgTop: "#220022", bgBottom: "#550055", particleColor: "#ff00ff", friction: 1.0, enemySpeedMod: 1.2 }
 ];
 
 const DYNAMIC_EVENTS = ['Meteor Shower', 'Heavy Rain', 'Thunderstorm', 'Blizzard', 'Sandstorm', 'Toxic Gas Leak', 'Solar Eclipse', 'Earthquake', 'Blackout', 'Alien Invasion'];
@@ -239,6 +239,8 @@ function CyberpunkSurvival() {
 
     const [gameState, setGameState] = useState('START_SCREEN');
     const [hud, setHud] = useState({ health: 100, level: 1, xp: 0, xpNeeded: 12, kills: 0, time: "00:00", coins: 0, combo: 0 });
+
+    const [selectedMapIndex, setSelectedMapIndex] = useState(0);
 
     const mapStateRef = useRef({ mapIndex: 0, nextMapAt: 60, currentEvent: null, eventTimer: 0, showBanner: false, bannerTimer: 0 });
     const interactiveObjectsRef = useRef([]);
@@ -379,7 +381,7 @@ function CyberpunkSurvival() {
                         inventory: ['shape_default', 'ability_default', 'trail_default'],
                         equipped_shape: 'shape_default', equipped_ability: 'ability_default', equipped_trail: 'trail_default',
                         settings: { master_vol: 50, music_vol: 40, sfx_vol: 50, screen_shake: true, particles: true, fps_counter: false, high_contrast: false },
-                        lifetime_stats: { games_played: 0, total_kills: 0, bosses_defeated: 0, deaths: 0, total_coins_earned: 0, coins_spent: 0, highest_kill_count: 0, longest_survival_time: 0, total_survival_seconds: 0, highest_combo: 0, total_powerups_collected: 0, total_play_time_seconds: 0 },
+                        lifetime_stats: { games_played: 0, total_kills: 0, bosses_defeated: 0, deaths: 0, total_coins_earned: 0, coins_spent: 0, highest_kill_count: 0, longest_survival_time: 0, total_survival_seconds: 0, highest_combo: 0, total_powerups_collected: 0, total_play_time_seconds: 0, map_survival_times: {} },
                         completed_achievements: [],
                         daily_quests_state: { last_reset_date: new Date().toDateString(), quests: dailyQuests }
                     }]);
@@ -514,11 +516,16 @@ function CyberpunkSurvival() {
             const totalRunCoinsMinedNet = m.coinsEarnedThisRun + operationalBonusAwardedCoins;
             const finalCoinWalletBalance = activeCoinWallet + totalRunCoinsMinedNet;
 
+            const currentMapSurvivalTimes = lifetimeStats.map_survival_times || {};
+            const prevMaxSurvival = currentMapSurvivalTimes[mapStateRef.current.mapIndex] || 0;
+            const updatedMapSurvivalTimes = { ...currentMapSurvivalTimes, [mapStateRef.current.mapIndex]: Math.max(prevMaxSurvival, m.clockSeconds) };
+
             const updatedStatsObj = {
                 games_played: (lifetimeStats.games_played ?? 0) + 1, total_kills: updatedKillsTotal, bosses_defeated: updatedBossesTotal, deaths: (lifetimeStats.deaths ?? 0) + 1,
                 total_coins_earned: (lifetimeStats.total_coins_earned ?? 0) + totalRunCoinsMinedNet, coins_spent: lifetimeStats.coins_spent ?? 0, highest_kill_count: Math.max(lifetimeStats.highest_kill_count ?? 0, m.killCounter),
                 longest_survival_time: Math.max(lifetimeStats.longest_survival_time ?? 0, m.clockSeconds), total_survival_seconds: updatedSurvivalSecs, highest_combo: Math.max(lifetimeStats.highest_combo ?? 0, m.highestComboThisRun),
-                total_powerups_collected: (lifetimeStats.total_powerups_collected ?? 0) + m.totalPowerupsThisRun, total_play_time_seconds: (lifetimeStats.total_play_time_seconds ?? 0) + m.clockSeconds
+                total_powerups_collected: (lifetimeStats.total_powerups_collected ?? 0) + m.totalPowerupsThisRun, total_play_time_seconds: (lifetimeStats.total_play_time_seconds ?? 0) + m.clockSeconds,
+                map_survival_times: updatedMapSurvivalTimes
             };
 
             return cyberbase.from('profiles').update({ coins: finalCoinWalletBalance, lifetime_stats: updatedStatsObj, completed_achievements: unlockedIdsThisSession, daily_quests_state: { last_reset_date: new Date().toDateString(), quests: syncQuestsState } }).eq('id', user.id)
@@ -542,7 +549,7 @@ function CyberpunkSurvival() {
         gameMetrics.current = { accumTime: 0, clockSeconds: 0, killCounter: 0, bossesKilled: 0, coinsEarnedThisRun: 0, currentCombo: 0, highestComboThisRun: 0, totalPowerupsThisRun: 0, screenShakeIntensity: 0 };
         touchVectorRef.current = { x: 0, y: 0 }; bossSpawnedForCurrentMilestone.current = false; lastTimestamp.current = performance.now();
 
-        mapStateRef.current = { mapIndex: 0, nextMapAt: 60, currentEvent: null, eventTimer: 0, showBanner: false, bannerTimer: 0 };
+        mapStateRef.current = { mapIndex: selectedMapIndex, nextMapAt: 60, currentEvent: null, eventTimer: 0, showBanner: false, bannerTimer: 0 };
         interactiveObjectsRef.current = [];
         npcsRef.current = [];
 
@@ -657,21 +664,6 @@ function CyberpunkSurvival() {
                         const calculated_payamt = Math.ceil(50 * activeTrailMods.coin);
                         metrics.coinsEarnedThisRun += calculated_payamt;
                         floatingTextsRef.current.push({ x: p.x, y: p.y - 30, text: `+${calculated_payamt} BONUS`, color: '#ffaa00', alpha: 1, scale: 1.2 });
-                    }
-
-                    // Map Progression Logic
-                    if (metrics.clockSeconds >= mapStateRef.current.nextMapAt && mapStateRef.current.mapIndex < MAP_CONFIGS.length - 1) {
-                        mapStateRef.current.nextMapAt += 60; // Progress map every 60 seconds
-                        mapStateRef.current.showBanner = true;
-                        mapStateRef.current.bannerTimer = 180;
-                    }
-                    if (mapStateRef.current.showBanner) {
-                        mapStateRef.current.bannerTimer--;
-                        // Only change the map index at the peak of the fade (90 frames)
-                        if (mapStateRef.current.bannerTimer === 90) {
-                            mapStateRef.current.mapIndex++;
-                        }
-                        if (mapStateRef.current.bannerTimer <= 0) mapStateRef.current.showBanner = false;
                     }
 
                     // Dynamic Events Logic
@@ -1027,7 +1019,11 @@ function CyberpunkSurvival() {
             // Map Grid Layout Systems
             ctx.save();
             const currentMapConfig = MAP_CONFIGS[mapStateRef.current.mapIndex];
-            ctx.fillStyle = currentMapConfig.gridColor;
+
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, logicalHeight);
+            bgGradient.addColorStop(0, currentMapConfig.bgTop);
+            bgGradient.addColorStop(1, currentMapConfig.bgBottom);
+            ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, logicalWidth, logicalHeight);
 
             ctx.strokeStyle = cfgHighContrast ? '#22223b' : '#121226'; ctx.lineWidth = 1;
@@ -1191,14 +1187,16 @@ function CyberpunkSurvival() {
         return React.createElement("div", { className: "screen-overlay" },
             React.createElement("div", { className: "neon-title title-blue" }, "SECTOR MAP DIRECTORY"),
             React.createElement("div", { className: "quest-dashboard-wrapper", style: { overflowY: 'auto' } },
-                MAP_CONFIGS.map((mapInfo, idx) =>
-                    React.createElement("div", { key: idx, className: "progression-card-strip", style: { borderColor: mapInfo.particleColor, background: 'rgba(0,0,0,0.5)' } },
+                MAP_CONFIGS.map((mapInfo, idx) => {
+                    const isUnlocked = idx === 0 || (lifetimeStats.map_survival_times && lifetimeStats.map_survival_times[idx - 1] >= 1800);
+                    return React.createElement("div", { key: idx, className: "progression-card-strip", style: { borderColor: isUnlocked ? mapInfo.particleColor : '#555', background: 'rgba(0,0,0,0.5)' } },
                         React.createElement("div", { className: "progression-meta-zone" },
-                            React.createElement("span", { className: "progression-item-title", style: { color: mapInfo.particleColor, fontSize: '14px' } }, `>> ${mapInfo.name}`),
-                            React.createElement("span", { className: "progression-item-desc", style: { fontSize: '12px' } }, mapInfo.theme)
-                        )
-                    )
-                )
+                            React.createElement("span", { className: "progression-item-title", style: { color: isUnlocked ? mapInfo.particleColor : '#555', fontSize: '14px' } }, `>> ${mapInfo.name}`),
+                            React.createElement("span", { className: "progression-item-desc", style: { fontSize: '12px', color: isUnlocked ? '#fff' : '#555' } }, isUnlocked ? mapInfo.theme : "LOCKED - SURVIVE 30M IN PREVIOUS SECTOR")
+                        ),
+                        isUnlocked ? React.createElement("button", { className: "neon-btn", style: { padding: '4px 10px', fontSize: '10px', borderColor: selectedMapIndex === idx ? '#00ff66' : mapInfo.particleColor, color: selectedMapIndex === idx ? '#00ff66' : mapInfo.particleColor }, onClick: () => { AudioEngine.playSFX('click'); setSelectedMapIndex(idx); setShowMaps(false); } }, selectedMapIndex === idx ? "SELECTED" : "SELECT") : null
+                    );
+                })
             ),
             React.createElement("button", { className: "neon-btn", style: { marginTop: '20px', borderColor: '#00f0ff', color: '#00f0ff' }, onClick: () => { AudioEngine.playSFX('click'); setShowMaps(false); } }, "RETURN TO TERMINAL")
         );
