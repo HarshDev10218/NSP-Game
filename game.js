@@ -243,6 +243,8 @@ function CyberpunkSurvival() {
     const mapStateRef = useRef({ mapIndex: 0, nextMapAt: 60, currentEvent: null, eventTimer: 0, showBanner: false, bannerTimer: 0 });
     const interactiveObjectsRef = useRef([]);
     const npcsRef = useRef([]);
+    const playerHpRef = useRef(100);
+    const bossHpRef = useRef(0);
 
     const [bossHp, setBossHp] = useState({ current: 0, max: 250, active: false });
     const [cards, setCards] = useState([]);
@@ -266,6 +268,7 @@ function CyberpunkSurvival() {
     const [showQuests, setShowQuests] = useState(false);
     const [showStartLeaderboard, setShowStartLeaderboard] = useState(false);
     const [showEnemies, setShowEnemies] = useState(false);
+    const [showMaps, setShowMaps] = useState(false);
 
     const [completedAchievements, setCompletedAchievements] = useState([]);
     const [dailyQuests, setDailyQuests] = useState([
@@ -1007,6 +1010,19 @@ function CyberpunkSurvival() {
                 enemiesRef.current = enemiesRef.current.filter(e => !e.dead); projectilesRef.current = projectilesRef.current.filter(p => !p.dead); gemsRef.current = gemsRef.current.filter(g => !g.dead);
                 particlesRef.current.forEach(pt => { pt.x += pt.vx * frameRatio; pt.y += pt.vy * frameRatio; pt.alpha -= 0.025 * frameRatio; }); particlesRef.current = particlesRef.current.filter(pt => pt.alpha > 0);
                 floatingTextsRef.current.forEach(ft => { ft.y -= 1.2 * frameRatio; ft.alpha -= 0.03 * frameRatio; }); floatingTextsRef.current = floatingTextsRef.current.filter(ft => ft.alpha > 0);
+
+                // Sync HP to HUD
+                if (Math.abs(playerHpRef.current - p.health) > 0.5) {
+                    playerHpRef.current = p.health;
+                    setHud(prev => ({ ...prev, health: p.health }));
+                }
+                if (bossActive) {
+                    const b = enemiesRef.current.find(e => e.type === 'boss');
+                    if (b && Math.abs(bossHpRef.current - b.hp) > 0.5) {
+                        bossHpRef.current = b.hp;
+                        setBossHp(prev => ({ ...prev, current: b.hp }));
+                    }
+                }
             }
 
             // --- CANVAS RENDERING (HYBRID HARDENED STRUCT DESIGN) ---
@@ -1315,6 +1331,28 @@ function CyberpunkSurvival() {
         );
     }
 
+
+    function renderMapsDashboard() {
+        return React.createElement("div", { className: "screen-overlay" },
+            React.createElement("div", { className: "neon-title title-blue" }, "SECTOR INTEL DIRECTORY"),
+            React.createElement("div", { className: "quest-dashboard-wrapper", style: { overflowY: 'auto', paddingBottom: '20px' } },
+                MAP_CONFIGS.map((m, idx) =>
+                    React.createElement("div", { key: idx, className: "progression-card-strip", style: { borderColor: m.gridColor, background: 'rgba(0,0,0,0.5)' } },
+                        React.createElement("div", { className: "progression-meta-zone" },
+                            React.createElement("span", { className: "progression-item-title", style: { color: m.particleColor, fontSize: '14px' } }, `>> ${idx + 1}. ${m.name}`),
+                            React.createElement("span", { className: "progression-item-desc", style: { fontSize: '12px' } }, m.theme),
+                            React.createElement("div", { style: { display: 'flex', gap: '10px', marginTop: '5px' } },
+                                React.createElement("span", { style: { fontSize: '10px', color: '#aaa' } }, `FRICTION: ${m.friction}`),
+                                React.createElement("span", { style: { fontSize: '10px', color: '#aaa' } }, `HOSTILE SPEED: ${m.enemySpeedMod}`)
+                            )
+                        )
+                    )
+                )
+            ),
+            React.createElement("button", { className: "neon-btn", style: { marginTop: '20px', borderColor: '#00f0ff', color: '#00f0ff' }, onClick: () => { AudioEngine.playSFX('click'); setShowMaps(false); } }, "RETURN TO TERMINAL")
+        );
+    }
+
     function renderStartScreenView() {
         const unifiedGlobalFooterElement = React.createElement("div", { className: "cyber-footer" }, "NEON SURVIVAL PROTOCOL v1.3.1 // PROGRESSION NETWORK CORE // INTEL ARCH");
         if (showStartLeaderboard) { return React.createElement("div", { className: "screen-overlay" }, React.createElement("div", { className: "neon-title title-blue" }, "NEON SURVIVAL PROTOCOL"), renderLeaderboardStructure(), React.createElement("button", { className: "neon-btn", style: { marginTop: '20px' }, onClick: toggleStartLeaderboardMode }, "BACK TO UPLINK"), unifiedGlobalFooterElement); }
@@ -1323,6 +1361,7 @@ function CyberpunkSurvival() {
         if (user && showStats) return renderLifetimeStatisticsDashboard();
         if (user && showQuests) return renderQuestsAndAchievementsDashboard();
         if (user && showEnemies) return renderEnemiesDashboard();
+        if (user && showMaps) return renderMapsDashboard();
 
         let dynamicControlZone = !user ? renderAuthFormStructure() : React.createElement("div", { key: "welcome-box", style: { textAlign: 'center', width: '100%' } },
             React.createElement("div", { className: "summary-text", style: { color: '#00ff66', fontWeight: 'bold' } }, `CONNECTED AGENT: [${username}]`),
@@ -1332,6 +1371,7 @@ function CyberpunkSurvival() {
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#ffaa00', color: '#ffaa00' }, onClick: () => { AudioEngine.playSFX('click'); setShowShop(true); } }, "OPEN UPGRADE STORE"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#ff5500', color: '#ff5500' }, onClick: () => { AudioEngine.playSFX('click'); setShowQuests(true); } }, "MISSIONS & ACHIEVEMENTS"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#ff00aa', color: '#ff00aa' }, onClick: () => { AudioEngine.playSFX('click'); setShowEnemies(true); } }, "HOSTILE INTEL DIRECTORY"),
+                React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#00ffff', color: '#00ffff' }, onClick: () => { AudioEngine.playSFX('click'); setShowMaps(true); } }, "SECTOR INTEL DIRECTORY"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#00ff66', color: '#00ff66' }, onClick: () => { AudioEngine.playSFX('click'); setShowStats(true); fetchLeaderboardScores(); } }, "LIFETIME DATA CORE"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#888', color: '#888' }, onClick: () => { AudioEngine.playSFX('click'); setShowSettings(true); } }, "HARDWARE SETTINGS"),
                 React.createElement("button", { className: "neon-btn", style: { width: '80%', maxWidth: '280px', borderColor: '#ff0055', color: '#ff0055' }, onClick: handleSignOut }, "TERMINATE CONNECTION")
