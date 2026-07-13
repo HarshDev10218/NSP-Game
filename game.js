@@ -326,7 +326,8 @@ function CyberpunkSurvival() {
         shield: { id: "shield", name: "PLASMA ORBITAL", desc: "Rotating energy shielding orbs. Lvl 5+ hyper-accelerates rotation.", lvl: 0 },
         laser: { id: "laser", name: "PIERCING LASER RAY", desc: "Fires piercing beam. Higher levels expand width and uptime.", lvl: 0 },
         magnet: { id: "magnet", name: "MAGNETIC FIELD LINK", desc: "Expands collection vacuum perimeter by 60px per stage (Max Lvl 6).", lvl: 0 },
-        speed: { id: "speed", name: "BOOT OVERDRIVE", desc: "Increases baseline system locomotion propulsion speed by 15%.", lvl: 0 }
+        speed: { id: "speed", name: "BOOT OVERDRIVE", desc: "Increases baseline system locomotion propulsion speed by 15%.", lvl: 0 },
+        xpBoost: { id: "xpBoost", name: "XP BOOST", desc: "Increases XP drop yield by 50% per level.", lvl: 0 }
     });
 
     // ==========================================
@@ -969,8 +970,31 @@ function CyberpunkSurvival() {
                         g.attracted = true; g.speed += 0.4 * frameRatio; g.x += Math.cos(Math.atan2(p.y - g.y, p.x - g.x)) * g.speed * frameRatio; g.y += Math.sin(Math.atan2(p.y - g.y, p.x - g.x)) * g.speed * frameRatio;
                         if (d < p.radius + 4) {
                             g.dead = true; AudioEngine.playSFX('powerup'); metrics.totalPowerupsThisRun++;
-                            if (g.type === 'heart') { p.health = Math.min(p.maxHealth, p.health + 24); floatingTextsRef.current.push({ x: p.x, y: p.y - 20, text: "+25 HP", color: '#ff0055', alpha: 1, scale: 1.1 }); setHud(prev => ({ ...prev, health: p.health })); } else {
-                                const computationalXPMult = hasLuckAbility ? 2 : 1; p.xp = Math.min(p.xpNeeded, p.xp + (g.val * computationalXPMult));
+                            if (g.type === 'heart') { p.health = Math.min(p.maxHealth, p.health + 24); floatingTextsRef.current.push({ x: p.x, y: p.y - 20, text: "+25 HP", color: '#ff0055', alpha: 1, scale: 1.1 }); setHud(prev => ({ ...prev, health: p.health })); }
+                            else if (g.type === 'nuke') {
+                                enemiesRef.current.forEach(e => { if (e.type !== 'boss') { e.hp = -10; } });
+                                if (cfgScreenShake) metrics.screenShakeIntensity = 20;
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 20, text: "NUKE!", color: '#ff0000', alpha: 1, scale: 1.5 });
+                                AudioEngine.playSFX('explosion');
+                            }
+                            else if (g.type === 'upgrade') {
+                                const upgradeKeys = Object.keys(upgradesRef.current);
+                                const randomKey = upgradeKeys[Math.floor(Math.random() * upgradeKeys.length)];
+                                upgradesRef.current[randomKey].lvl++;
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 20, text: "SKILL UP!", color: '#ffff00', alpha: 1, scale: 1.3 });
+                            }
+                            else if (g.type === 'arrows') {
+                                for (let i = 0; i < 12; i++) {
+                                    const angle = (Math.PI * 2 / 12) * i;
+                                    projectilesRef.current.push({ x: p.x, y: p.y, vx: Math.cos(angle) * 7, vy: Math.sin(angle) * 7, radius: 4, damage: 25, isEnemy: false, dead: false });
+                                }
+                                floatingTextsRef.current.push({ x: p.x, y: p.y - 20, text: "ARROW NOVA!", color: '#ffaa00', alpha: 1, scale: 1.3 });
+                                AudioEngine.playSFX('shoot');
+                            }
+                            else {
+                                const computationalXPMult = hasLuckAbility ? 2 : 1;
+                                const xpBoostMult = 1 + (upgradesRef.current.xpBoost.lvl * 0.5);
+                                p.xp = Math.min(p.xpNeeded, p.xp + (g.val * computationalXPMult * xpBoostMult));
                                 if (p.xp >= p.xpNeeded) { p.xp -= p.xpNeeded; p.level++; p.xpNeeded = Math.floor(p.xpNeeded * 1.45) + 8; setGameState('LEVEL_UP'); setCards(Object.keys(upgradesRef.current).map(k => upgradesRef.current[k]).filter(u => u.id !== 'magnet' || u.lvl < 6).sort(() => Math.random() - 0.5).slice(0, 3)); }
                                 setHud(prev => ({ ...prev, level: p.level, xp: p.xp, xpNeeded: p.xpNeeded }));
                             }
@@ -992,7 +1016,11 @@ function CyberpunkSurvival() {
                         for (let i = 0; i < (e.type === 'boss' ? 50 : 10); i++) { particlesRef.current.push({ x: e.x, y: e.y, vx: Math.cos(Math.random()*Math.PI*2)*3, vy: Math.sin(Math.random()*Math.PI*2)*3, r: Math.random()*2.5+1, alpha: 1, color: e.color }); }
                         if (e.type !== 'boss' && e.hp !== -10) {
                             if (e.type === 'goliath' || (e.type === 'hound' && Math.random() < 0.12)) gemsRef.current.push({ x: e.x, y: e.y, type: 'heart', speed: 1, attracted: false, dead: false });
-                            for (let i=0; i<(e.type==='goliath'?6:1); i++) gemsRef.current.push({ x: e.x+(Math.random()*14-7), y: e.y+(Math.random()*14-7), val: e.type==='goliath'?2:1, speed: 1, attracted: false, dead: false });
+                            for (let i=0; i<(e.type==='goliath'?12:3); i++) gemsRef.current.push({ x: e.x+(Math.random()*14-7), y: e.y+(Math.random()*14-7), val: e.type==='goliath'?2:1, speed: 1, attracted: false, dead: false });
+                            const randSpec = Math.random();
+                            if (randSpec < 0.01) { gemsRef.current.push({ x: e.x, y: e.y, type: 'nuke', speed: 1, attracted: false, dead: false }); }
+                            else if (randSpec < 0.03) { gemsRef.current.push({ x: e.x, y: e.y, type: 'upgrade', speed: 1, attracted: false, dead: false }); }
+                            else if (randSpec < 0.07) { gemsRef.current.push({ x: e.x, y: e.y, type: 'arrows', speed: 1, attracted: false, dead: false }); }
                         }
                     }
                 });
@@ -1092,7 +1120,17 @@ function CyberpunkSurvival() {
 
 
             // Render Modules
-            gemsRef.current.forEach(g => { ctx.save(); ctx.fillStyle = g.type === 'heart' ? '#ff0055' : (g.val > 1 ? '#00ffff' : '#00ff66'); ctx.shadowBlur = cfgHighContrast ? 0 : 8; ctx.shadowColor = ctx.fillStyle; ctx.beginPath(); ctx.arc(g.x - cx, g.y - cy, g.type==='heart'?6:3.5, 0, Math.PI*2); ctx.fill(); ctx.restore(); });
+            gemsRef.current.forEach(g => { ctx.save();
+                if (g.type === 'nuke') { ctx.fillStyle = '#ff0000'; }
+                else if (g.type === 'upgrade') { ctx.fillStyle = '#ffff00'; }
+                else if (g.type === 'arrows') { ctx.fillStyle = '#ffaa00'; }
+                else { ctx.fillStyle = g.type === 'heart' ? '#ff0055' : (g.val > 1 ? '#00ffff' : '#00ff66'); }
+                ctx.shadowBlur = cfgHighContrast ? 0 : 8; ctx.shadowColor = ctx.fillStyle; ctx.beginPath();
+                let radius = 3.5;
+                if (g.type === 'heart') radius = 6;
+                else if (g.type === 'nuke' || g.type === 'upgrade' || g.type === 'arrows') radius = 5;
+                ctx.arc(g.x - cx, g.y - cy, radius, 0, Math.PI*2); ctx.fill(); ctx.restore();
+            });
             projectilesRef.current.forEach(pItem => { ctx.save(); ctx.shadowBlur = cfgHighContrast ? 0 : 10; ctx.shadowColor = pItem.laser ? '#9900ff' : (pItem.isEnemy ? '#00ff66' : '#00f0ff'); if (pItem.laser) { ctx.strokeStyle = '#9900ff'; ctx.lineWidth = pItem.width * (pItem.duration / 20); ctx.beginPath(); ctx.moveTo(pItem.x - cx, pItem.y - cy); ctx.lineTo((pItem.x + Math.cos(pItem.angle)*pItem.length) - cx, (pItem.y + Math.sin(pItem.angle)*pItem.length) - cy); ctx.stroke(); } else { ctx.fillStyle = pItem.isEnemy ? '#00ff66' : '#00f0ff'; ctx.beginPath(); ctx.arc(pItem.x - cx, pItem.y - cy, pItem.radius, 0, Math.PI*2); ctx.fill(); } ctx.restore(); });
             enemiesRef.current.forEach(e => { ctx.save(); ctx.shadowBlur = cfgHighContrast ? 0 : 8; ctx.shadowColor = e.color; ctx.strokeStyle = e.color; ctx.fillStyle = e.flashTime > 0 ? '#ffffff' : (e.type==='breacher'&&e.state==='detonating'&&(Math.floor(performance.now()/50)%2===0)?'#ff0000':'#030307'); ctx.lineWidth = 2; ctx.beginPath(); if (e.shape === 'sq') { ctx.strokeRect(e.x - e.r - cx, e.y - e.r - cy, e.r*2, e.r*2); ctx.fillRect(e.x - e.r - cx, e.y - e.r - cy, e.r*2, e.r*2); } else if (e.shape === 'tri') { ctx.moveTo(e.x - cx, e.y - e.r - cy); ctx.lineTo(e.x + e.r - cx, e.y + e.r - cy); ctx.lineTo(e.x - e.r - cx, e.y + e.r - cy); ctx.closePath(); ctx.fill(); ctx.stroke(); } else if (e.shape === 'pent') { for (let i = 0; i < 5; i++) { let a = (Math.PI*2/5)*i - Math.PI/2; ctx.lineTo(e.x + Math.cos(a)*e.r - cx, e.y + Math.sin(a)*e.r - cy); } ctx.closePath(); ctx.fill(); ctx.stroke(); } else { for (let i=0; i<8; i++) { let a = (Math.PI*2/8)*i - Math.PI/2; ctx.lineTo(e.x + Math.cos(a)*e.r - cx, e.y + Math.sin(a)*e.r - cy); } ctx.closePath(); ctx.fill(); ctx.stroke(); } ctx.restore(); });
             if (cfgParticles) { particlesRef.current.forEach(pt => { ctx.save(); ctx.globalAlpha = pt.alpha; ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x - cx, pt.y - cy, pt.r, 0, Math.PI*2); ctx.fill(); ctx.restore(); }); }
